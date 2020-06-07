@@ -1,4 +1,25 @@
+/*
+ *  IObPicoRV32 -- A PicoRV32 Wrapper
+ *
+ *  Copyright (C) 2020 IObundle <info@iobundle.com>
+ *
+ *  Permission to use, copy, modify, and/or distribute this software for any
+ *  purpose with or without fee is hereby granted, provided that the above
+ *  copyright notice and this permission notice appear in all copies.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ *  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ *  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ *  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+
 `timescale 1 ns / 1 ps
+`include "system.vh"
 `include "interconnect.vh"
 
 module iob_picorv32 
@@ -68,13 +89,13 @@ module iob_picorv32
 		  .mem_ready     (cpu_resp[`ready(0)]),
  `ifndef USE_LA_IF
 		  .mem_valid     (cpu_req[`valid(0)]),
-		  .mem_addr      (cpu_req[`address(0)]),
+		  .mem_addr      (cpu_req[`address(0,`ADDR_W, 0)]),
 		  .mem_wdata     (cpu_req[`wdata(0)]),
 		  .mem_wstrb     (cpu_req[`wstrb(0)]),
 `else
                   .mem_la_read   (la_read),
                   .mem_la_write  (la_write),                  
-                  .mem_la_addr   (cpu_req[`address(0)]),
+                  .mem_la_addr   (cpu_req[`address(0,`ADDR_W, 0)]),
                   .mem_la_wdata  (cpu_req[`wdata(0)]),
                   .mem_la_wstrb  (cpu_req[`wstrb(0)]),
  `endif
