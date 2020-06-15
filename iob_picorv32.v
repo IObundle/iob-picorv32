@@ -62,11 +62,10 @@ module iob_picorv32
      membus_demux
        (
         // master interface
-        .m_req (cpu_req[`req(0)]),
+        .m_req ({cpu_req[`valid(0)], cpu_instr, cpu_req[`REQ_W-3:0]}),
         .m_resp (cpu_resp[`resp(0)]),
         
         // slaves interface
-        .s_sel ({1'b0, cpu_instr}),
         .s_req ({ibus_req[`req(0)], dbus_req[`req(0)]}),
         .s_resp({ibus_resp[`resp(0)], dbus_resp[`resp(0)]})
         );
