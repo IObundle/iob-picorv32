@@ -37,20 +37,21 @@ module iob_picorv32
    input [`RESP_W-1:0] dbus_resp
    );
 
+   //create picorv32 native interface cat bus
+   wire [1*`REQ_W-1:0]                                  cpu_req;
+   wire [1*`RESP_W-1:0]                                 cpu_resp;
+
    //handle look ahead interface
  `ifdef USE_LA_IF
    //manual connect 
    wire                                                 la_read;
    wire                                                 la_write;
-   assign                                               picorv32_valid = la_read | la_write;
+   assign                                               cpu_req[`valid(0)] = la_read | la_write;
  `endif
 
    //picorv32 instruction select signal
    wire                                                 cpu_instr;
 
-   //create picorv32 native interface cat bus
-   wire [1*`REQ_W-1:0]                                  cpu_req;
-   wire [1*`RESP_W-1:0]                                 cpu_resp;
    
    //
    //SPLIT MASTER BUS IN INSTRUCTION AND DATA BUSES
