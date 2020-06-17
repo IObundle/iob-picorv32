@@ -42,11 +42,28 @@ module iob_picorv32
    wire [1*`RESP_W-1:0]                                 cpu_resp;
 
    //handle look ahead interface
- `ifdef USE_LA_IF
+`ifdef USE_LA_IF
+   //NON FUNCTIONAL -- DO NOT USE
    //manual connect 
    wire                                                 la_read;
    wire                                                 la_write;
-   assign                                               cpu_req[`valid(0)] = la_read | la_write;
+   wire [`DATA_W/8-1:0]                                 la_wstrb;
+   reg [`DATA_W/8-1:0]                                  la_wstrb_reg;   
+   reg                                                  valid_reg;
+
+   assign cpu_req[`wstrb(0)] = la_wstrb_reg;
+   assign cpu_req[`valid(0)] = valid_reg;
+   
+   always @(posedge clk, posedge rst)
+     if(rst) begin
+        valid_reg <= 1'b0;
+        la_wstrb_reg <= {`DATA_W/8{1'b0}};   
+     end else if(la_read | la_write) begin
+        valid_reg <= 1'b1;
+        la_wstrb_reg <= {`DATA_W/8{la_write}};
+     end else if(cpu_resp[`ready(0)]) begin 
+       valid_reg <= 1'b0;
+     end
  `endif
 
    //picorv32 instruction select signal
@@ -70,7 +87,6 @@ module iob_picorv32
         .s_req ({ibus_req[`req(0)], dbus_req[`req(0)]}),
         .s_resp({ibus_resp[`resp(0)], dbus_resp[`resp(0)]})
         );
-
 
    //intantiate picorv32
    picorv32 #(
@@ -97,7 +113,7 @@ module iob_picorv32
                   .mem_la_write  (la_write),                  
                   .mem_la_addr   (cpu_req[`address(0,`ADDR_W, 0)]),
                   .mem_la_wdata  (cpu_req[`wdata(0)]),
-                  .mem_la_wstrb  (cpu_req[`wstrb(0)]),
+                  .mem_la_wstrb  (la_wstrb),
  `endif
                   // Pico Co-Processor PCPI
                   .pcpi_valid    (),
