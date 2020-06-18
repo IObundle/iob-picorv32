@@ -26,6 +26,7 @@ module iob_picorv32
   (
    input               clk,
    input               rst,
+   input               boot,
    output              trap,
 
    // instruction bus
@@ -37,57 +38,25 @@ module iob_picorv32
    input [`RESP_W-1:0] dbus_resp
    );
 
-   //create picorv32 native interface cat bus
-   wire [1*`REQ_W-1:0]                                  cpu_req;
+   //create picorv32 native interface concat buses
+   wire [1*`REQ_W-1:0]                                  cpu_req, cpu_i_req, cpu_d_req;
    wire [1*`RESP_W-1:0]                                 cpu_resp;
 
-   //handle look ahead interface
-`ifdef USE_LA_IF
-   //NON FUNCTIONAL -- DO NOT USE
-   //manual connect 
-   wire                                                 la_read;
-   wire                                                 la_write;
-   wire [`DATA_W/8-1:0]                                 la_wstrb;
-   reg [`DATA_W/8-1:0]                                  la_wstrb_reg;   
-   reg                                                  valid_reg;
+   //modify addresses if DDR used according to boot status
+`ifdef RUN_DDR_USE_SRAM
+   assign ibus_req = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
+   assign dbus_req = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
+`else
+   assign ibus_req = cpu_i_req;
+   assign dbus_req = cpu_d_req;
+`endif
 
-   assign cpu_req[`wstrb(0)] = la_wstrb_reg;
-   assign cpu_req[`valid(0)] = valid_reg;
-   
-   always @(posedge clk, posedge rst)
-     if(rst) begin
-        valid_reg <= 1'b0;
-        la_wstrb_reg <= {`DATA_W/8{1'b0}};   
-     end else if(la_read | la_write) begin
-        valid_reg <= 1'b1;
-        la_wstrb_reg <= {`DATA_W/8{la_write}};
-     end else if(cpu_resp[`ready(0)]) begin 
-       valid_reg <= 1'b0;
-     end
- `endif
-
-   //picorv32 instruction select signal
+   //split cpu bus into instruction and data buses
    wire                                                 cpu_instr;
-
+   assign cpu_i_req = cpu_instr? cpu_req: {`REQ_W{1'b0}};
+   assign cpu_d_req = !cpu_instr? cpu_req: {`REQ_W{1'b0}};
+   assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
    
-   //
-   //SPLIT MASTER BUS IN INSTRUCTION AND DATA BUSES
-   //
-   split
-     #(
-       .N_SLAVES(2)
-       )
-     membus_demux
-       (
-        // master interface
-        .m_req ({cpu_req[`valid(0)], cpu_instr, cpu_req[`REQ_W-3:0]}),
-        .m_resp (cpu_resp[`resp(0)]),
-        
-        // slaves interface
-        .s_req ({ibus_req[`req(0)], dbus_req[`req(0)]}),
-        .s_resp({ibus_resp[`resp(0)], dbus_resp[`resp(0)]})
-        );
-
    //intantiate picorv32
    picorv32 #(
               //.ENABLE_PCPI(1), //enables the following 2 parameters
@@ -103,19 +72,11 @@ module iob_picorv32
 		  .mem_instr     (cpu_instr),
 		  .mem_rdata     (cpu_resp[`rdata(0)]),
 		  .mem_ready     (cpu_resp[`ready(0)]),
- `ifndef USE_LA_IF
 		  .mem_valid     (cpu_req[`valid(0)]),
-		  .mem_addr      (cpu_req[`address(0,`ADDR_W, 0)]),
+		  .mem_addr      (cpu_req[`address(0, `ADDR_W, 0)]),
 		  .mem_wdata     (cpu_req[`wdata(0)]),
 		  .mem_wstrb     (cpu_req[`wstrb(0)]),
-`else
-                  .mem_la_read   (la_read),
-                  .mem_la_write  (la_write),                  
-                  .mem_la_addr   (cpu_req[`address(0,`ADDR_W, 0)]),
-                  .mem_la_wdata  (cpu_req[`wdata(0)]),
-                  .mem_la_wstrb  (la_wstrb),
- `endif
-                  // Pico Co-Processor PCPI
+                  //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
                   .pcpi_rs1      (),
