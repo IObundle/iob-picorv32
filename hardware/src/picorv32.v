@@ -1427,9 +1427,9 @@ module picorv32 #(
       if (WITH_PCPI && CATCH_ILLINSN) begin
 	 if (resetn && pcpi_valid && !pcpi_int_wait) begin
 	    if (pcpi_timeout_counter)
-	      pcpi_timeout_counter <= pcpi_timeout_counter - 1;
+	      pcpi_timeout_counter <= pcpi_timeout_counter - 1'b1;
 	 end else
-	   pcpi_timeout_counter <= ~0;
+	   pcpi_timeout_counter <= ~(4'd0);
 	 pcpi_timeout <= !pcpi_timeout_counter;
       end
 
@@ -1597,7 +1597,7 @@ module picorv32 #(
 		   if (ENABLE_REGS_DUALPORT) begin
 		      pcpi_valid <= 1;
 		      `debug($display("LD_RS2: %2d 0x%08x", decoded_rs2, cpuregs_rs2));
-		      reg_sh <= cpuregs_rs2;
+		      reg_sh <= cpuregs_rs2[4:0];
 		      reg_op2 <= cpuregs_rs2;
 		      dbg_rs2val <= cpuregs_rs2;
 		      dbg_rs2val_valid <= 1;
@@ -2344,7 +2344,7 @@ module picorv32_pcpi_fast_mul #(
 	 active[0] <= 0;
       end
 
-      active[3:1] <= active;
+      active[3:1] <= active[2:0];
       shift_out <= instr_any_mulh;
 
       if (!resetn)
