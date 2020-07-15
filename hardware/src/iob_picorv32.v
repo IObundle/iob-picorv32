@@ -77,7 +77,7 @@ module iob_picorv32
 		  .mem_rdata     (cpu_resp[`rdata(0)]),
 		  .mem_ready     (cpu_resp[`ready(0)]),
 		  .mem_valid     (cpu_req[`valid(0)]),
-		  .mem_addr      (cpu_req[`address(0, `ADDR_W, 0)]),
+		  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
 		  .mem_wdata     (cpu_req[`wdata(0)]),
 		  .mem_wstrb     (cpu_req[`wstrb(0)]),
                   //co-processor interface (PCPI)
