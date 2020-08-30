@@ -22,6 +22,9 @@
 `include "system.vh"
 `include "interconnect.vh"
 
+//the look ahead interface is not working because mem_instr is unknown at request
+//`define LA_IF
+
 module iob_picorv32 
   #(
     parameter ADDR_W=32,
@@ -61,6 +64,20 @@ module iob_picorv32
    assign cpu_d_req = !cpu_instr? cpu_req: {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
    
+   reg                                                  cpu_valid;
+   assign cpu_req[`valid(0)] = cpu_valid;
+`ifdef LA_IF
+   wire                                                 mem_la_read, mem_la_write;
+   always @(posedge clk) cpu_valid <= mem_la_read | mem_la_write;
+`else
+   always @* cpu_valid = cpu_valid_int & ~cpu_valid_reg;
+   assign cpu_req[`valid(0)] = cpu_valid;
+   wire                                                 cpu_valid_int;
+   reg                                                  cpu_valid_reg;
+   always @(posedge clk) cpu_valid_reg <= cpu_valid_int;
+`endif
+   
+
    //intantiate picorv32
    picorv32 #(
               //.ENABLE_PCPI(1), //enables the following 2 parameters
@@ -72,14 +89,23 @@ module iob_picorv32
 		  .clk           (clk),
 		  .resetn        (~rst),
 		  .trap          (trap),
-		  //memory interface
 		  .mem_instr     (cpu_instr),
-		  .mem_rdata     (cpu_resp[`rdata(0)]),
-		  .mem_ready     (cpu_resp[`ready(0)]),
-		  .mem_valid     (cpu_req[`valid(0)]),
+`ifndef LA_IF
+		  //memory interface
+		  .mem_valid     (cpu_valid_int),
 		  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
 		  .mem_wdata     (cpu_req[`wdata(0)]),
 		  .mem_wstrb     (cpu_req[`wstrb(0)]),
+`else
+                  //lookahead interface
+                  .mem_la_read   (mem_la_read),
+                  .mem_la_write  (mem_la_write),
+                  .mem_la_addr   (cpu_req[`address(0, `ADDR_W)]),
+                  .mem_la_wdata  (cpu_req[`wdata(0)]),
+                  .mem_la_wstrb  (cpu_req[`wstrb(0)]),
+`endif
+		  .mem_rdata     (cpu_resp[`rdata(0)]),
+		  .mem_ready     (cpu_resp[`ready(0)]),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
@@ -95,5 +121,5 @@ module iob_picorv32
                   .trace_valid   (),
                   .trace_data    ()                  
                   );
-  
+   
 endmodule
