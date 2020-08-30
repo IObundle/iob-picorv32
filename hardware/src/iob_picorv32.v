@@ -70,10 +70,10 @@ module iob_picorv32
    wire                                                 mem_la_read, mem_la_write;
    always @(posedge clk) cpu_valid <= mem_la_read | mem_la_write;
 `else
-   always @* cpu_valid = cpu_valid_int & ~cpu_valid_reg;
-   assign cpu_req[`valid(0)] = cpu_valid;
    wire                                                 cpu_valid_int;
    reg                                                  cpu_valid_reg;
+   always @* cpu_valid = cpu_valid_int & ~cpu_valid_reg;
+   assign cpu_req[`valid(0)] = cpu_valid;
    always @(posedge clk) cpu_valid_reg <= cpu_valid_int;
 `endif
    
