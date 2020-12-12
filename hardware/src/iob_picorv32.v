@@ -30,53 +30,52 @@ module iob_picorv32
     parameter ADDR_W=32,
     parameter DATA_W=32
     )
-  (
-   input               clk,
-   input               rst,
-   input               boot,
-   output              trap,
+   (
+    input               clk,
+    input               rst,
+    input               boot,
+    output              trap,
 
-   // instruction bus
-   output [`REQ_W-1:0] ibus_req,
-   input [`RESP_W-1:0] ibus_resp,
+    // instruction bus
+    output [`REQ_W-1:0] ibus_req,
+    input [`RESP_W-1:0] ibus_resp,
 
-   // data bus
-   output [`REQ_W-1:0] dbus_req,
-   input [`RESP_W-1:0] dbus_resp
-   );
+    // data bus
+    output [`REQ_W-1:0] dbus_req,
+    input [`RESP_W-1:0] dbus_resp
+    );
 
    //create picorv32 native interface concat buses
-   wire [1*`REQ_W-1:0]                                  cpu_req, cpu_i_req, cpu_d_req;
-   wire [1*`RESP_W-1:0]                                 cpu_resp;
+   wire [1*`REQ_W-1:0]  cpu_req, cpu_i_req, cpu_d_req;
+   wire [1*`RESP_W-1:0] cpu_resp;
 
    //modify addresses if DDR used according to boot status
 `ifdef RUN_DDR_USE_SRAM
-   wire [`REQ_W-1:0]                                    ibus_req_int = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
-   wire [`REQ_W-1:0]                                    dbus_req_int = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
+   wire [`REQ_W-1:0]    ibus_req_int = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
+   wire [`REQ_W-1:0]    dbus_req_int = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
 `else
-   wire [`REQ_W-1:0]                                    ibus_req_int = cpu_i_req;
-   wire [`REQ_W-1:0]                                    dbus_req_int = cpu_d_req;
+   wire [`REQ_W-1:0]    ibus_req_int = cpu_i_req;
+   wire [`REQ_W-1:0]    dbus_req_int = cpu_d_req;
 `endif
    assign ibus_req = rst? {`REQ_W{1'b0}}: ibus_req_int;
    assign dbus_req = rst? {`REQ_W{1'b0}}: dbus_req_int;
 
    //split cpu bus into instruction and data buses
-   wire                                                 cpu_instr;
-   assign cpu_i_req = cpu_instr? cpu_req: {`REQ_W{1'b0}};
-   assign cpu_d_req = !cpu_instr? cpu_req: {`REQ_W{1'b0}};
+   wire                 cpu_instr;
+   assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
+   assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
    
-   reg                                                  cpu_valid;
-   assign cpu_req[`valid(0)] = cpu_valid;
+   wire                 cpu_valid;
+   wire                 cpu_ready = cpu_resp[`ready(0)];
+   
 `ifdef LA_IF
-   wire                                                 mem_la_read, mem_la_write;
+   wire                 mem_la_read, mem_la_write;
    always @(posedge clk) cpu_valid <= mem_la_read | mem_la_write;
 `else
-   wire                                                 cpu_valid_int;
-   reg                                                  cpu_valid_reg;
-   always @* cpu_valid = cpu_valid_int & ~cpu_valid_reg;
-   assign cpu_req[`valid(0)] = cpu_valid;
-   always @(posedge clk) cpu_valid_reg <= cpu_valid_int;
+   wire                 cpu_valid_int;
+   reg                  cpu_valid_reg;
+   assign cpu_req[`valid(0)] = cpu_valid & ~cpu_ready;
 `endif
    
 
@@ -94,7 +93,7 @@ module iob_picorv32
                   .mem_instr     (cpu_instr),
 `ifndef LA_IF
                   //memory interface
-                  .mem_valid     (cpu_valid_int),
+                  .mem_valid     (cpu_valid),
                   .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
                   .mem_wdata     (cpu_req[`wdata(0)]),
                   .mem_wstrb     (cpu_req[`wstrb(0)]),
