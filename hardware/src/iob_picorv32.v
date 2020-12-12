@@ -51,12 +51,14 @@ module iob_picorv32
 
    //modify addresses if DDR used according to boot status
 `ifdef RUN_DDR_USE_SRAM
-   assign ibus_req = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
-   assign dbus_req = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
+   wire [`REQ_W-1:0]                                    ibus_req_int = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
+   wire [`REQ_W-1:0]                                    dbus_req_int = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
 `else
-   assign ibus_req = cpu_i_req;
-   assign dbus_req = cpu_d_req;
+   wire [`REQ_W-1:0]                                    ibus_req_int = cpu_i_req;
+   wire [`REQ_W-1:0]                                    dbus_req_int = cpu_d_req;
 `endif
+   assign ibus_req = rst? {`REQ_W{1'b0}}: ibus_req_int;
+   assign dbus_req = rst? {`REQ_W{1'b0}}: dbus_req_int;
 
    //split cpu bus into instruction and data buses
    wire                                                 cpu_instr;
@@ -81,22 +83,33 @@ module iob_picorv32
    //intantiate picorv32
    picorv32 #(
               //.ENABLE_PCPI(1), //enables the following 2 parameters
-	      .BARREL_SHIFTER(1),
-	      .ENABLE_FAST_MUL(1),
-	      .ENABLE_DIV(1)
-	      )
+              .BARREL_SHIFTER(1),
+              .ENABLE_FAST_MUL(1),
+              .ENABLE_DIV(1)
+              )
    picorv32_core (
-		  .clk           (clk),
-		  .resetn        (~rst),
-		  .trap          (trap),
-		  .mem_instr     (cpu_instr),
+                  .clk           (clk),
+                  .resetn        (~rst),
+                  .trap          (trap),
+                  .mem_instr     (cpu_instr),
 `ifndef LA_IF
-		  //memory interface
-		  .mem_valid     (cpu_valid_int),
-		  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
-		  .mem_wdata     (cpu_req[`wdata(0)]),
-		  .mem_wstrb     (cpu_req[`wstrb(0)]),
+                  //memory interface
+                  .mem_valid     (cpu_valid_int),
+                  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
+                  .mem_wdata     (cpu_req[`wdata(0)]),
+                  .mem_wstrb     (cpu_req[`wstrb(0)]),
+                  //lookahead interface
+                  .mem_la_read   (),
+                  .mem_la_write  (),
+                  .mem_la_addr   (),
+                  .mem_la_wdata  (),
+                  .mem_la_wstrb  (),
 `else
+                  //memory interface
+                  .mem_valid     (),
+                  .mem_addr      (),
+                  .mem_wdata     (),
+                  .mem_wstrb     (),
                   //lookahead interface
                   .mem_la_read   (mem_la_read),
                   .mem_la_write  (mem_la_write),
@@ -104,8 +117,8 @@ module iob_picorv32
                   .mem_la_wdata  (cpu_req[`wdata(0)]),
                   .mem_la_wstrb  (cpu_req[`wstrb(0)]),
 `endif
-		  .mem_rdata     (cpu_resp[`rdata(0)]),
-		  .mem_ready     (cpu_resp[`ready(0)]),
+                  .mem_rdata     (cpu_resp[`rdata(0)]),
+                  .mem_ready     (cpu_resp[`ready(0)]),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
