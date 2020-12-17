@@ -80,22 +80,33 @@ module iob_picorv32
    //intantiate picorv32
    picorv32 #(
               //.ENABLE_PCPI(1), //enables the following 2 parameters
-	      .BARREL_SHIFTER(1),
-	      .ENABLE_FAST_MUL(1),
-	      .ENABLE_DIV(1)
-	      )
+              .BARREL_SHIFTER(1),
+              .ENABLE_FAST_MUL(1),
+              .ENABLE_DIV(1)
+              )
    picorv32_core (
-		  .clk           (clk),
-		  .resetn        (~rst),
-		  .trap          (trap),
-		  .mem_instr     (cpu_instr),
+                  .clk           (clk),
+                  .resetn        (~rst),
+                  .trap          (trap),
+                  .mem_instr     (cpu_instr),
 `ifndef LA_IF
-		  //memory interface
+                  //memory interface
                   .mem_valid     (cpu_valid),
-		  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
-		  .mem_wdata     (cpu_req[`wdata(0)]),
-		  .mem_wstrb     (cpu_req[`wstrb(0)]),
+                  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
+                  .mem_wdata     (cpu_req[`wdata(0)]),
+                  .mem_wstrb     (cpu_req[`wstrb(0)]),
+                  //lookahead interface
+                  .mem_la_read   (),
+                  .mem_la_write  (),
+                  .mem_la_addr   (),
+                  .mem_la_wdata  (),
+                  .mem_la_wstrb  (),
 `else
+                  //memory interface
+                  .mem_valid     (),
+                  .mem_addr      (),
+                  .mem_wdata     (),
+                  .mem_wstrb     (),
                   //lookahead interface
                   .mem_la_read   (mem_la_read),
                   .mem_la_write  (mem_la_write),
@@ -103,8 +114,8 @@ module iob_picorv32
                   .mem_la_wdata  (cpu_req[`wdata(0)]),
                   .mem_la_wstrb  (cpu_req[`wstrb(0)]),
 `endif
-		  .mem_rdata     (cpu_resp[`rdata(0)]),
-		  .mem_ready     (cpu_resp[`ready(0)]),
+                  .mem_rdata     (cpu_resp[`rdata(0)]),
+                  .mem_ready     (cpu_resp[`ready(0)]),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
