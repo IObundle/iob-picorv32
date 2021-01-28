@@ -79,6 +79,7 @@ module iob_picorv32
 
    //intantiate picorv32
    picorv32 #(
+              .COMPRESSED_ISA(1),
               //.ENABLE_PCPI(1), //enables the following 2 parameters
               .BARREL_SHIFTER(1),
               .ENABLE_FAST_MUL(1),
