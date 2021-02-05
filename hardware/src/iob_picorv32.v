@@ -42,7 +42,10 @@ module iob_picorv32
 
     // data bus
     output [`REQ_W-1:0] dbus_req,
-    input [`RESP_W-1:0] dbus_resp
+    input [`RESP_W-1:0] dbus_resp,
+    
+    //IRQ
+    input [31:0] irq
     );
 
    //create picorv32 native interface concat buses
@@ -82,7 +85,9 @@ module iob_picorv32
               //.ENABLE_PCPI(1), //enables the following 2 parameters
               .BARREL_SHIFTER(1),
               .ENABLE_FAST_MUL(1),
-              .ENABLE_DIV(1)
+              .ENABLE_DIV(1),
+              .ENABLE_IRQ(1),
+              .LATCHED_IRQ (32'h ffff_ffef)
               )
    picorv32_core (
                   .clk           (clk),
@@ -126,7 +131,7 @@ module iob_picorv32
                   .pcpi_wait     (1'b0),
                   .pcpi_ready    (1'b0),
                   // IRQ
-                  .irq           (32'd0),
+                  .irq           (irq),
                   .eoi           (),
                   .trace_valid   (),
                   .trace_data    ()                  
