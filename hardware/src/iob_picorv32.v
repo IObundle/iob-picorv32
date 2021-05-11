@@ -25,7 +25,7 @@
 //the look ahead interface is not working because mem_instr is unknown at request
 //`define LA_IF
 
-module iob_picorv32 
+module iob_picorv32
   #(
     parameter ADDR_W=32,
     parameter DATA_W=32
@@ -50,7 +50,7 @@ module iob_picorv32
    wire [1*`RESP_W-1:0] cpu_resp;
 
    //modify addresses if DDR used according to boot status
-`ifdef RUN_DDR_USE_SRAM
+`ifdef RUN_EXTMEM_USE_SRAM
    assign ibus_req = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
    assign dbus_req = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
 `else
@@ -63,10 +63,10 @@ module iob_picorv32
    assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
-   
+
    wire                 cpu_valid;
    wire                 cpu_ready = cpu_resp[`ready(0)];
-   
+
 `ifdef LA_IF
    wire                 mem_la_read, mem_la_write;
    always @(posedge clk) cpu_valid <= mem_la_read | mem_la_write;
@@ -75,7 +75,7 @@ module iob_picorv32
    reg                  cpu_valid_reg;
    assign cpu_req[`valid(0)] = cpu_valid & ~cpu_ready;
 `endif
-   
+
 
    //intantiate picorv32
    picorv32 #(
@@ -132,7 +132,7 @@ module iob_picorv32
                   .irq           (32'd0),
                   .eoi           (),
                   .trace_valid   (),
-                  .trace_data    ()                  
+                  .trace_data    ()
                   );
-   
+
 endmodule
