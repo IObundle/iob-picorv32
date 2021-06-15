@@ -53,6 +53,9 @@ module iob_picorv32
 `ifdef RUN_EXTMEM_USE_SRAM
    assign ibus_req = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
    assign dbus_req = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
+`elsif RUN_FLASH
+    assign ibus_req = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
+    assign dbus_req = cpu_d_req;
 `else
    assign ibus_req = cpu_i_req;
    assign dbus_req = cpu_d_req;
