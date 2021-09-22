@@ -36,6 +36,8 @@ module iob_picorv32
     input               boot,
     output              trap,
 
+    input               irq_timer,
+
     // instruction bus
     output [`REQ_W-1:0] ibus_req,
     input [`RESP_W-1:0] ibus_resp,
@@ -82,6 +84,8 @@ module iob_picorv32
 `ifdef USE_COMPRESSED
               .COMPRESSED_ISA(1),
 `endif
+              .MASKED_IRQ (32'h 8000_0000),
+              .LATCHED_IRQ (32'h 8000_0000),
               //.ENABLE_PCPI(1), //enables the following 2 parameters
               .BARREL_SHIFTER(1),
               .ENABLE_FAST_MUL(1),
@@ -129,7 +133,7 @@ module iob_picorv32
                   .pcpi_wait     (1'b0),
                   .pcpi_ready    (1'b0),
                   // IRQ
-                  .irq           (32'd0),
+                  .irq           ({irq_timer, 31'd0}),
                   .eoi           (),
                   .trace_valid   (),
                   .trace_data    ()                  
