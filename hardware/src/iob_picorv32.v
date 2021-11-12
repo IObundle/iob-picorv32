@@ -79,13 +79,9 @@ module iob_picorv32
 
    //intantiate picorv32
    picorv32 #(
-`ifdef USE_COMPRESSED
-              .COMPRESSED_ISA(1),
-`endif
-`ifdef USE_MUL_DIV
-              .ENABLE_FAST_MUL(1),
-              .ENABLE_DIV(1),
-`endif
+              .COMPRESSED_ISA(`USE_COMPRESSED),
+              .ENABLE_FAST_MUL(`USE_MUL_DIV),
+              .ENABLE_DIV(`USE_MUL_DIV),
               .BARREL_SHIFTER(1)
               )
    picorv32_core (
