@@ -82,10 +82,11 @@ module iob_picorv32
 `ifdef USE_COMPRESSED
               .COMPRESSED_ISA(1),
 `endif
-              //.ENABLE_PCPI(1), //enables the following 2 parameters
-              .BARREL_SHIFTER(1),
+`ifdef USE_MUL_DIV
               .ENABLE_FAST_MUL(1),
-              .ENABLE_DIV(1)
+              .ENABLE_DIV(1),
+`endif
+              .BARREL_SHIFTER(1)
               )
    picorv32_core (
                   .clk           (clk),
