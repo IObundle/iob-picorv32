@@ -1,2 +1,6 @@
-include ./core.mk
+include config.mk
 
+corename:
+	@echo $(MODULE)
+
+.PHONY: corename
