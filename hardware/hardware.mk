@@ -1,6 +1,7 @@
-MODULES+=CPU
+include $(CPU_DIR)/config.mk
 
-CPU_SRC_DIR:=$(CPU_DIR)/hardware/src
+MODULES+=$(MODULE)
+
 VSRC+=$(CPU_SRC_DIR)/picorv32.v $(CPU_SRC_DIR)/iob_picorv32.v
 
 #use hard multiplier and divider instructions
