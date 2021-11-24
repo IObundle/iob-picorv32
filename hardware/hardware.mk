@@ -1,6 +1,6 @@
 include $(CPU_DIR)/config.mk
 
-MODULES+=$(MODULE)
+MODULES+=$(shell make -C $(CPU_DIR) corename | grep -v make)
 
 VSRC+=$(CPU_SRC_DIR)/picorv32.v $(CPU_SRC_DIR)/iob_picorv32.v
 
