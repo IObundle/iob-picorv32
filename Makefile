@@ -1,6 +1,6 @@
 include config.mk
 
 corename:
-	@echo $(MODULE)
+	@echo "CPU"
 
 .PHONY: corename
