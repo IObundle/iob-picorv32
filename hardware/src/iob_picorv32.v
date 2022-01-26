@@ -20,7 +20,7 @@
 
 `timescale 1 ns / 1 ps
 `include "system.vh"
-`include "interconnect.vh"
+`include "iob_intercon.vh"
 
 //the look ahead interface is not working because mem_instr is unknown at request
 //`define LA_IF
