@@ -197,7 +197,7 @@ module picorv32 #(
 
    task empty_statement;
       input x;
-      
+
       // This task is used by the `assert directive in non-formal mode to
       // avoid empty statement (which are unsupported by plain Verilog syntax).
       begin end
@@ -681,7 +681,7 @@ module picorv32 #(
    `FORMAL_KEEP reg dbg_rs2val_valid;
 
    always @* begin
-      new_ascii_instr = "";
+      new_ascii_instr = "\0";
 
       if (instr_lui)      new_ascii_instr = "lui";
       if (instr_auipc)    new_ascii_instr = "auipc";
@@ -1258,7 +1258,7 @@ module picorv32 #(
 	alu_out = alu_shl;
       else if(BARREL_SHIFTER && (instr_srl || instr_srli || instr_sra || instr_srai))
 	alu_out = alu_shr;
-      
+
 
 `ifdef RISCV_FORMAL_BLACKBOX_ALU
       alu_out_0 = $anyseq;
@@ -1304,7 +1304,7 @@ module picorv32 #(
 	   cpuregs_write = 1;
 	end
    end
-   
+
 `ifndef PICORV32_REGS
    always @(posedge clk) begin
       if (resetn && cpuregs_write && latched_rd)
@@ -1520,7 +1520,7 @@ module picorv32 #(
 		eoi <= irq_pending & ~irq_mask;
 		next_irq_pending = next_irq_pending & irq_mask;
 	     end
-	  
+
 
 	     if (ENABLE_TRACE && latched_trace) begin
 		latched_trace <= 0;
@@ -1753,7 +1753,7 @@ module picorv32 #(
 			mem_do_rinst <= mem_do_prefetch;
 		      cpu_state <= cpu_state_exec;
 		   end
-                   
+
 		end else
 		  cpu_state <= cpu_state_ld_rs2;
 	     end
@@ -1834,19 +1834,19 @@ module picorv32 #(
 		cpu_state <= cpu_state_fetch;
 	     end else if (TWO_STAGE_SHIFT && reg_sh >= 4) begin
 
-		if (instr_slli || instr_sll) 
+		if (instr_slli || instr_sll)
                   reg_op1 <= reg_op1 << 4;
-		else if (instr_srli || instr_srl) 
+		else if (instr_srli || instr_srl)
                   reg_op1 <= reg_op1 >> 4;
-		else if (instr_srai || instr_sra) 
+		else if (instr_srai || instr_sra)
                   reg_op1 <= $signed(reg_op1) >>> 4;
 
 		reg_sh <= reg_sh - 5'd4;
 	     end else begin
 
-		if (instr_slli || instr_sll) 
+		if (instr_slli || instr_sll)
                   reg_op1 <= reg_op1 << 1;
-		else if (instr_srli || instr_srl) 
+		else if (instr_srli || instr_srl)
                   reg_op1 <= reg_op1 >> 1;
 		else if (instr_srai || instr_sra)
                   reg_op1 <= $signed(reg_op1) >>> 1;
@@ -1904,7 +1904,7 @@ module picorv32 #(
 		   if (latched_is_lu) reg_out <= mem_rdata_word;
 		   else if (latched_is_lh) reg_out <= $signed(mem_rdata_word[15:0]);
 		   else if (latched_is_lb) reg_out <= $signed(mem_rdata_word[7:0]);
-                   
+
 		   decoder_trigger <= 1;
 		   decoder_pseudo_trigger <= 1;
 		   cpu_state <= cpu_state_fetch;
