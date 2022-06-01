@@ -27,8 +27,13 @@
 
 module iob_picorv32 
   #(
-    parameter ADDR_W=32,
-    parameter DATA_W=32
+    parameter ADDR_W=`ADDR_W,
+    parameter DATA_W=`DATA_W,
+    parameter V_BIT=`V_BIT,
+    parameter E_BIT=`E_BIT,
+    parameter P_BIT=`P_BIT,
+    parameter USE_COMPRESSED=`USE_COMPRESSED,
+    parameter USE_MUL_DIV=`USE_MUL_DIV
     )
    (
     input               clk,
@@ -51,8 +56,8 @@ module iob_picorv32
 
    //modify addresses if DDR used according to boot status
 `ifdef RUN_EXTMEM
-   assign ibus_req = {cpu_i_req[`V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
-   assign dbus_req = {cpu_d_req[`V_BIT], (cpu_d_req[`E_BIT]^~boot)&~cpu_d_req[`P_BIT], cpu_d_req[`REQ_W-3:0]};
+   assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
+   assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
 `else
    assign ibus_req = cpu_i_req;
    assign dbus_req = cpu_d_req;
@@ -79,9 +84,9 @@ module iob_picorv32
 
    //intantiate picorv32
    picorv32 #(
-              .COMPRESSED_ISA(`USE_COMPRESSED),
-              .ENABLE_FAST_MUL(`USE_MUL_DIV),
-              .ENABLE_DIV(`USE_MUL_DIV),
+              .COMPRESSED_ISA(USE_COMPRESSED),
+              .ENABLE_FAST_MUL(USE_MUL_DIV),
+              .ENABLE_DIV(USE_MUL_DIV),
               .BARREL_SHIFTER(1)
               )
    picorv32_core (
@@ -92,7 +97,7 @@ module iob_picorv32
 `ifndef LA_IF
                   //memory interface
                   .mem_valid     (cpu_valid),
-                  .mem_addr      (cpu_req[`address(0, `ADDR_W)]),
+                  .mem_addr      (cpu_req[`address(0, ADDR_W)]),
                   .mem_wdata     (cpu_req[`wdata(0)]),
                   .mem_wstrb     (cpu_req[`wstrb(0)]),
                   //lookahead interface
@@ -110,7 +115,7 @@ module iob_picorv32
                   //lookahead interface
                   .mem_la_read   (mem_la_read),
                   .mem_la_write  (mem_la_write),
-                  .mem_la_addr   (cpu_req[`address(0, `ADDR_W)]),
+                  .mem_la_addr   (cpu_req[`address(0, ADDR_W)]),
                   .mem_la_wdata  (cpu_req[`wdata(0)]),
                   .mem_la_wstrb  (cpu_req[`wstrb(0)]),
 `endif
