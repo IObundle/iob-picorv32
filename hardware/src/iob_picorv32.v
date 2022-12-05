@@ -19,21 +19,21 @@
 
 
 `timescale 1 ns / 1 ps
-`include "system.vh"
-`include "iob_intercon.vh"
+`include "iob_soc.vh"
+`include "iob_lib.vh"
 
 //the look ahead interface is not working because mem_instr is unknown at request
 //`define LA_IF
 
 module iob_picorv32 
   #(
-    parameter ADDR_W=`ADDR_W,
-    parameter DATA_W=`DATA_W,
+    parameter ADDR_W=`IOB_PICORV32_ADDR_W,
+    parameter DATA_W=`IOB_PICORV32_DATA_W,
     parameter V_BIT=`V_BIT,
     parameter E_BIT=`E_BIT,
     parameter P_BIT=`P_BIT,
-    parameter USE_COMPRESSED=`USE_COMPRESSED,
-    parameter USE_MUL_DIV=`USE_MUL_DIV
+    parameter USE_COMPRESSED=`IOB_PICORV32_USE_COMPRESSED,
+    parameter USE_MUL_DIV=`IOB_PICORV32_USE_MUL_DIV
     )
    (
     input               clk,
