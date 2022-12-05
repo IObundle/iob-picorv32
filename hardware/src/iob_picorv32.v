@@ -27,13 +27,13 @@
 
 module iob_picorv32 
   #(
-    parameter ADDR_W=`IOB_SOC_ADDR_W,
-    parameter DATA_W=`IOB_SOC_DATA_W,
+    parameter ADDR_W=`IOB_PICORV32_ADDR_W,
+    parameter DATA_W=`IOB_PICORV32_DATA_W,
     parameter V_BIT=`V_BIT,
     parameter E_BIT=`E_BIT,
     parameter P_BIT=`P_BIT,
-    parameter USE_COMPRESSED=`IOB_SOC_USE_COMPRESSED,
-    parameter USE_MUL_DIV=`IOB_SOC_USE_MUL_DIV
+    parameter USE_COMPRESSED=`IOB_PICORV32_USE_COMPRESSED,
+    parameter USE_MUL_DIV=`IOB_PICORV32_USE_MUL_DIV
     )
    (
     input               clk,
