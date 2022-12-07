@@ -10,22 +10,15 @@ version = 'V0.10'
 confs = \
 [
     # Macros
-    {'name':'ADDR_W', 'type':'M', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
-    {'name':'DATA_W', 'type':'M', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
-    {'name':'V_BIT', 'type':'M', 'val':'`V_BIT', 'min':'1', 'max':'?', 'descr':'description here'},
-    {'name':'E_BIT', 'type':'M', 'val':'`E_BIT', 'min':'1', 'max':'?', 'descr':'description here'},
-    {'name':'P_BIT', 'type':'M', 'val':'`P_BIT', 'min':'1', 'max':'?', 'descr':'description here'},
-    {'name':'USE_COMPRESSED', 'type':'M', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
-    {'name':'USE_MUL_DIV', 'type':'M', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
 
     # Parameters
-    {'name':'ADDR_W', 'type':'P', 'descr':'description here'},
-    {'name':'DATA_W', 'type':'P', 'descr':'description here'},
-    {'name':'V_BIT', 'type':'P', 'descr':'description here'},
-    {'name':'E_BIT', 'type':'P', 'descr':'description here'},
-    {'name':'P_BIT', 'type':'P', 'descr':'description here'},
-    {'name':'USE_COMPRESSED', 'type':'P', 'descr':'description here'},
-    {'name':'USE_MUL_DIV', 'type':'P', 'descr':'description here'}
+    {'name':'ADDR_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
+    {'name':'DATA_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
+    {'name':'V_BIT', 'type':'P', 'val':'`V_BIT', 'min':'1', 'max':'?', 'descr':'description here'},
+    {'name':'E_BIT', 'type':'P', 'val':'`E_BIT', 'min':'1', 'max':'?', 'descr':'description here'},
+    {'name':'P_BIT', 'type':'P', 'val':'`P_BIT', 'min':'1', 'max':'?', 'descr':'description here'},
+    {'name':'USE_COMPRESSED', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
+    {'name':'USE_MUL_DIV', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
 ]
 
 ios = \
