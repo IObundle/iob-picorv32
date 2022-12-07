@@ -71,7 +71,7 @@ module iob_picorv32
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
    
    wire                 cpu_valid;
-   wire                 cpu_ready = cpu_resp[`ready(0)];
+   wire                 cpu_ready = cpu_resp[`rvalid(0)];
    
 `ifdef LA_IF
    wire                 mem_la_read, mem_la_write;
@@ -79,7 +79,7 @@ module iob_picorv32
 `else
    wire                 cpu_valid_int;
    reg                  cpu_valid_reg;
-   assign cpu_req[`valid(0)] = cpu_valid & ~cpu_ready;
+   assign cpu_req[`wvalid(0)] = cpu_valid & ~cpu_ready;
 `endif
    
 
@@ -121,7 +121,7 @@ module iob_picorv32
                   .mem_la_wstrb  (cpu_req[`wstrb(0)]),
 `endif
                   .mem_rdata     (cpu_resp[`rdata(0)]),
-                  .mem_ready     (cpu_resp[`ready(0)]),
+                  .mem_ready     (cpu_resp[`rvalid(0)]),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
