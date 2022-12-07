@@ -79,7 +79,7 @@ module iob_picorv32
 `else
    wire                 cpu_valid_int;
    reg                  cpu_valid_reg;
-   assign cpu_req[`wvalid(0)] = cpu_valid & ~cpu_ready;
+   assign cpu_req[`avalid(0)] = cpu_valid & ~cpu_ready;
 `endif
    
 
