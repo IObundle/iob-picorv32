@@ -65,16 +65,16 @@ module iob_picorv32
 `endif
 
    //split cpu bus into instruction and data buses
-   wire                 cpu_instr;
+   wire   cpu_instr;
    assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
    
-   wire                 cpu_avalid;
-   wire                 cpu_rvalid = cpu_resp[`rvalid(0)];
-   
+   wire cpu_avalid;
+   wire cpu_rvalid = cpu_resp[`rvalid(0)];
+   wire cpu_ready  = cpu_resp[`ready(0)];
 `ifdef LA_IF
-   wire                 mem_la_read, mem_la_write;
+   wire mem_la_read, mem_la_write;
    always @(posedge clk) cpu_avalid <= mem_la_read | mem_la_write;
 `else
    assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_rvalid;
