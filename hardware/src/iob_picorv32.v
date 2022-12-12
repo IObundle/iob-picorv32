@@ -56,7 +56,7 @@ module iob_picorv32
    wire [1*`RESP_W-1:0] cpu_resp;
 
    //modify addresses if DDR used according to boot status
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_RUN_EXTMEM
    assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
    assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
 `else
@@ -74,12 +74,25 @@ module iob_picorv32
    wire [`WSTRB_W-1:0] cpu_wstrb;
    assign cpu_req[`wstrb(0)] = cpu_wstrb;
    wire cpu_rvalid = cpu_resp[`rvalid(0)];
-   wire cpu_ready  = (cpu_resp[`ready(0)] & |cpu_wstrb) | cpu_rvalid;
+   wire cpu_ready  = wr_en | cpu_rvalid;
+   // maneira do artur:    wire cpu_ready  = (cpu_resp[`ready(0)] & |cpu_wstrb) | cpu_rvalid;
+   
+   reg wr_en;
+   always @( posedge clk, rst ) begin
+      if (rst) wr_en <= 1'b0;
+      else wr_en <= (| cpu_wstrb) & cpu_resp[`ready(0)] & cpu_avalid & ~cpu_avalid_reg;
+   end
+   reg cpu_avalid_reg;
+   always @( posedge clk, rst ) begin
+      if (rst) cpu_avalid_reg <= 1'b0;
+      else cpu_avalid_reg <= cpu_avalid;
+   end
+
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
    always @(posedge clk) cpu_avalid <= mem_la_read | mem_la_write;
 `else
-   assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_rvalid;
+   assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_ready;
 `endif
    
 
