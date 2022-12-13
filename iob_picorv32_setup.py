@@ -4,8 +4,12 @@ import os, sys
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 from setup import setup
 
-top = 'iob_picorv32'
-version = 'V0.10'
+meta = \
+{
+'name':'iob_picorv32',
+'version':'V0.10',
+'flows':''
+}
 
 confs = \
 [
@@ -44,4 +48,4 @@ ios = \
 blocks = []
 
 if __name__ == "__main__":
-    setup(top, version, confs, ios, None, blocks)
+    setup(meta, confs, ios, None, blocks)
