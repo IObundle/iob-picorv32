@@ -50,7 +50,7 @@ blocks = []
 lib_srcs = {
     'hw_setup': {
         'v_headers' : [  ],
-        'hw_modules': [  ]
+        'hw_modules': [ 'iob_reg_a.v' ]
     },
 }
 
