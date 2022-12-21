@@ -47,10 +47,17 @@ ios = \
 
 blocks = []
 
+lib_srcs = {
+    'hw_setup': {
+        'v_headers' : [  ],
+        'hw_modules': [  ]
+    },
+}
+
 # Main function to setup this core and its components
 # build_dir and gen_tex may be modified if this core is to be generated as a submodule of another
 def main(build_dir=None, gen_tex=True):
-    setup(meta, confs, ios, None, blocks, build_dir=build_dir, gen_tex=gen_tex)
+    setup(meta, confs, ios, None, blocks, lib_srcs, build_dir=build_dir, gen_tex=gen_tex)
 
 if __name__ == "__main__":
     main()
