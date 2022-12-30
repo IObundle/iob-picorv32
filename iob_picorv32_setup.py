@@ -10,6 +10,12 @@ meta = \
 'version':'V0.10',
 'flows':''
 }
+meta['submodules'] = {
+    'hw_setup': {
+        'v_headers' : [  ],
+        'hw_modules': [ 'iob_reg_a.v' ]
+    },
+}
 
 dirs = {
 'setup':os.path.dirname(__file__),
