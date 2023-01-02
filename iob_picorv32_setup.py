@@ -17,11 +17,6 @@ meta['submodules'] = {
     },
 }
 
-dirs = {
-'setup':os.path.dirname(__file__),
-'build':f"../{meta['name']+'_'+meta['version']}",
-}
-
 confs = \
 [
     # Macros
@@ -58,21 +53,10 @@ ios = \
 
 blocks = []
 
-lib_srcs = {
-    'hw_setup': {
-        'v_headers' : [  ],
-        'hw_modules': [ 'iob_reg_a.v' ]
-    },
-}
-
 # Main function to setup this core and its components
-# Gen_tex and gen_makefile are created by default. However, when this system is a submodule of another, we don't want these files of this system.
-# dirs_override: allows overriding some directories. This is useful when a top system wants to override the default build directory of this system.
-def main(dirs_override={}, gen_tex=True, gen_makefile=True):
-    #Override dirs
-    dirs.update(dirs_override)
+def main():
     # Setup this system
-    setup(meta, confs, ios, None, blocks, lib_srcs, dirs=dirs, gen_tex=gen_tex, gen_makefile=gen_makefile)
+    setup(meta, confs, ios, None, blocks)
 
 if __name__ == "__main__":
     main()
