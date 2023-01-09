@@ -37,8 +37,9 @@ module iob_picorv32
     parameter USE_MUL_DIV=`IOB_PICORV32_USE_MUL_DIV
     )
    (
-    input               clk,
-    input               rst,
+    input               clk_i,
+    input               rst_i,
+    input               cke_i,
     input               boot,
     output              trap,
 
@@ -78,13 +79,13 @@ module iob_picorv32
    // maneira do artur:    wire cpu_ready  = (cpu_resp[`ready(0)] & |cpu_wstrb) | cpu_rvalid;
    
    wire wr_en;
-   wire cpu_avalid_reg;
-   iob_reg_a #(1,0) wr_en_reg_a (clk, rst, (| cpu_wstrb) & cpu_resp[`ready(0)] & cpu_avalid & ~cpu_avalid_reg, wr_en);
-   iob_reg_a #(1,0) cpu_avalid_reg_a (clk, rst, cpu_avalid, cpu_avalid_reg);
+   wire cpu_avalid_reg_o;
+   iob_reg #(1,0) wr_en_reg (clk_i, rst_i, cke_i, (| cpu_wstrb) & cpu_resp[`ready(0)] & cpu_avalid & ~cpu_avalid_reg_o, wr_en);
+   iob_reg #(1,0) cpu_avalid_reg (clk_i, rst_i, cke_i, cpu_avalid, cpu_avalid_reg_o);
 
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
-   always @(posedge clk) cpu_avalid <= mem_la_read | mem_la_write;
+   always @(posedge clk_i) cpu_avalid <= mem_la_read | mem_la_write;
 `else
    assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_ready;
 `endif
@@ -98,8 +99,8 @@ module iob_picorv32
               .BARREL_SHIFTER(1)
               )
    picorv32_core (
-                  .clk           (clk),
-                  .resetn        (~rst),
+                  .clk           (clk_i),
+                  .resetn        (~rst_i),
                   .trap          (trap),
                   .mem_instr     (cpu_instr),
 `ifndef LA_IF
