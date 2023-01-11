@@ -13,7 +13,7 @@ meta = \
 meta['submodules'] = {
     'hw_setup': {
         'v_headers' : [  ],
-        'hw_modules': [ 'iob_reg.v' ]
+        'modules': [ 'iob_reg.v' ]
     },
 }
 
