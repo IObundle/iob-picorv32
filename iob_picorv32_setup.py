@@ -2,7 +2,7 @@
 
 import os, sys
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
-from setup import setup
+import setup
 
 meta = \
 {
@@ -12,7 +12,7 @@ meta = \
 }
 meta['submodules'] = {
     'hw_setup': {
-        'v_headers' : [  ],
+        'headers' : [  ],
         'modules': [ 'iob_reg.v' ]
     },
 }
@@ -56,7 +56,7 @@ blocks = []
 # Main function to setup this core and its components
 def main():
     # Setup this system
-    setup(meta, confs, ios, None, blocks)
+    setup.setup(meta, confs, ios, None, blocks)
 
 if __name__ == "__main__":
     main()
