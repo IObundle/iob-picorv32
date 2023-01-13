@@ -74,20 +74,23 @@ module iob_picorv32
    wire cpu_avalid;
    wire [`WSTRB_W-1:0] cpu_wstrb;
    assign cpu_req[`wstrb(0)] = cpu_wstrb;
+   //wire wr_en = (| cpu_wstrb) & cpu_avalid;
    wire cpu_rvalid = cpu_resp[`rvalid(0)];
-   wire cpu_ready  = wr_en | cpu_rvalid;
-   // maneira do artur:    wire cpu_ready  = (cpu_resp[`ready(0)] & |cpu_wstrb) | cpu_rvalid;
+   wire cpu_ready  = cpu_resp[`ready(0)];
+   wire cpu_wvalid = (~cpu_ready & wr_en) | (cpu_ready & cpu_avalid_reg_o) ;
+   wire cpu_rwvalid= cpu_wvalid | cpu_rvalid;
+   // maneira do artur:    wire cpu_rwvalid  = (cpu_resp[`ready(0)] & |cpu_wstrb) | cpu_rvalid;
    
-   wire wr_en;
-   wire cpu_avalid_reg_o;
-   iob_reg #(1,0) wr_en_reg (clk_i, rst_i, cke_i, (| cpu_wstrb) & cpu_resp[`ready(0)] & cpu_avalid & ~cpu_avalid_reg_o, wr_en);
+   reg wr_en;
+   reg cpu_avalid_reg_o;
+   iob_reg_e #(1,0) wr_en_reg (clk_i, rst_i, cke_i, cpu_avalid, (| cpu_wstrb), wr_en);
    iob_reg #(1,0) cpu_avalid_reg (clk_i, rst_i, cke_i, cpu_avalid, cpu_avalid_reg_o);
 
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
    always @(posedge clk_i) cpu_avalid <= mem_la_read | mem_la_write;
 `else
-   assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_ready;
+   assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_rwvalid;
 `endif
    
 
@@ -129,7 +132,7 @@ module iob_picorv32
                   .mem_la_wstrb  (cpu_wstrb),
 `endif
                   .mem_rdata     (cpu_resp[`rdata(0)]),
-                  .mem_ready     (cpu_ready),
+                  .mem_ready     (cpu_rwvalid),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
