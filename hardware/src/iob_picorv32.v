@@ -77,14 +77,11 @@ module iob_picorv32
    //wire wr_en = (| cpu_wstrb) & cpu_avalid;
    wire cpu_rvalid = cpu_resp[`rvalid(0)];
    wire cpu_ready  = cpu_resp[`ready(0)];
-   wire cpu_wvalid = (~cpu_ready & wr_en) | (cpu_ready & cpu_avalid_reg_o) ;
-   wire cpu_rwvalid= cpu_wvalid | cpu_rvalid;
+   wire cpu_rwvalid= (cpu_wack | cpu_rvalid) & cpu_avalid;
    // maneira do artur:    wire cpu_rwvalid  = (cpu_resp[`ready(0)] & |cpu_wstrb) | cpu_rvalid;
    
-   reg wr_en;
-   reg cpu_avalid_reg_o;
-   iob_reg_e #(1,0) wr_en_reg (clk_i, rst_i, cke_i, cpu_avalid, (| cpu_wstrb), wr_en);
-   iob_reg #(1,0) cpu_avalid_reg (clk_i, rst_i, cke_i, cpu_avalid, cpu_avalid_reg_o);
+   reg cpu_wack;
+   iob_reg #(1,0) wack_reg (clk_i, rst_i, cke_i, cpu_avalid & (| cpu_wstrb) & cpu_ready, cpu_wack);
 
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
