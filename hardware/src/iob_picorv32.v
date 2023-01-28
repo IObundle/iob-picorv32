@@ -70,6 +70,7 @@ module iob_picorv32
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
    
+   reg iob_wack;
    wire cpu_avalid;
    wire [`WSTRB_W-1:0] cpu_wstrb;
    assign cpu_req[`wstrb(0)] = cpu_wstrb;
@@ -77,7 +78,6 @@ module iob_picorv32
    wire iob_ready  = cpu_resp[`ready(0)];
    wire cpu_ready  = (iob_rvalid | iob_wack) & cpu_avalid;
 
-   reg iob_wack;
    wire iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
    iob_reg #(1,0) wack_reg (clk_i, rst_i, cke_i, iob_wack_nxt, iob_wack);
 
