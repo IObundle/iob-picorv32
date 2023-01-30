@@ -4,13 +4,10 @@ import os, sys
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 import setup
 
-meta = \
-{
-'name':'iob_picorv32',
-'version':'V0.10',
-'flows':''
-}
-meta['submodules'] = {
+name='iob_picorv32'
+version='V0.10'
+flows=''
+submodules = {
     'hw_setup': {
         'headers' : [  ],
         'modules': [ 'iob_reg.v' ]
