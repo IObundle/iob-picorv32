@@ -25,17 +25,9 @@
 //the look ahead interface is not working because mem_instr is unknown at request
 //`define LA_IF
 
-module iob_picorv32 
-  #(
-    parameter ADDR_W=`IOB_PICORV32_ADDR_W,
-    parameter DATA_W=`IOB_PICORV32_DATA_W,
-    parameter V_BIT=`IOB_PICORV32_V_BIT,
-    parameter E_BIT=`IOB_PICORV32_E_BIT,
-    parameter P_BIT=`IOB_PICORV32_P_BIT,
-    parameter USE_COMPRESSED=`IOB_PICORV32_USE_COMPRESSED,
-    parameter USE_MUL_DIV=`IOB_PICORV32_USE_MUL_DIV
-    )
-   (
+module iob_picorv32 #(
+    `include "iob_picorv32_params.vh"
+    ) (
     input               clk_i,
     input               rst_i,
     input               cke_i,
@@ -56,13 +48,15 @@ module iob_picorv32
    wire [1*`RESP_W-1:0] cpu_resp;
 
    //modify addresses if DDR used according to boot status
-`ifdef RUN_EXTMEM
-   assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
-   assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
-`else
-   assign ibus_req = cpu_i_req;
-   assign dbus_req = cpu_d_req;
-`endif
+   generate
+      if (RUN_EXTMEM) begin
+         assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
+         assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
+      end else begin
+         assign ibus_req = cpu_i_req;
+         assign dbus_req = cpu_d_req;
+      end
+   endgenerate
 
    //split cpu bus into instruction and data buses
    wire   cpu_instr;
