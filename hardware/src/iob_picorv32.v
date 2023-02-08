@@ -49,7 +49,7 @@ module iob_picorv32 #(
 
    //modify addresses if DDR used according to boot status
    generate
-      if (RUN_EXTMEM) begin
+      if (USE_EXTMEM) begin
          assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
          assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
       end else begin
