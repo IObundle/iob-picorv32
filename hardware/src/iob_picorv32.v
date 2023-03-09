@@ -67,9 +67,9 @@ module iob_picorv32 #(
    reg iob_wack;
    wire cpu_avalid;
    wire [`WSTRB_W-1:0] cpu_wstrb;
-   assign cpu_req[`wstrb(0)] = cpu_wstrb;
-   wire iob_rvalid = cpu_resp[`rvalid(0)];
-   wire iob_ready  = cpu_resp[`ready(0)];
+   assign cpu_req[`WSTRB(0)] = cpu_wstrb;
+   wire iob_rvalid = cpu_resp[`RVALID(0)];
+   wire iob_ready  = cpu_resp[`READY(0)];
    wire cpu_ready  = (iob_rvalid | iob_wack) & cpu_avalid;
 
    wire iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
@@ -79,7 +79,7 @@ module iob_picorv32 #(
    wire mem_la_read, mem_la_write;
    always @(posedge clk_i) cpu_avalid <= mem_la_read | mem_la_write;
 `else
-   assign cpu_req[`avalid(0)] = cpu_avalid & ~cpu_ready;
+   assign cpu_req[`AVALID(0)] = cpu_avalid & ~cpu_ready;
 `endif
    
 
@@ -98,8 +98,8 @@ module iob_picorv32 #(
 `ifndef LA_IF
                   //memory interface
                   .mem_valid     (cpu_avalid),
-                  .mem_addr      (cpu_req[`address(0, ADDR_W)]),
-                  .mem_wdata     (cpu_req[`wdata(0)]),
+                  .mem_addr      (cpu_req[`ADDRESS(0, ADDR_W)]),
+                  .mem_wdata     (cpu_req[`WDATA(0)]),
                   .mem_wstrb     (cpu_wstrb),
                   //lookahead interface
                   .mem_la_read   (),
@@ -116,11 +116,11 @@ module iob_picorv32 #(
                   //lookahead interface
                   .mem_la_read   (mem_la_read),
                   .mem_la_write  (mem_la_write),
-                  .mem_la_addr   (cpu_req[`address(0, ADDR_W)]),
-                  .mem_la_wdata  (cpu_req[`wdata(0)]),
+                  .mem_la_addr   (cpu_req[`ADDRESS(0, ADDR_W)]),
+                  .mem_la_wdata  (cpu_req[`WDATA(0)]),
                   .mem_la_wstrb  (cpu_wstrb),
 `endif
-                  .mem_rdata     (cpu_resp[`rdata(0)]),
+                  .mem_rdata     (cpu_resp[`RDATA(0)]),
                   .mem_ready     (cpu_ready),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
