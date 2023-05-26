@@ -6,6 +6,10 @@ import sys
 from iob_module import iob_module
 from setup import setup
 
+# Submodules
+from iob_reg import iob_reg
+
+
 class iob_picorv32(iob_module):
     def __init__(self, **kwargs):
         super().__init__(
@@ -19,7 +23,12 @@ class iob_picorv32(iob_module):
     def setup(self, **kwargs):
         super().setup(**kwargs)
 
-        self.setup_submodules()
+        # Hardware headers & modules
+        iob_reg.setup()
+
+        # Verilog modules instances
+        # TODO
+
         self.setup_confs()
         self.setup_ios()
         self.setup_block_groups()
@@ -27,14 +36,6 @@ class iob_picorv32(iob_module):
         # Setup core using LIB function
         setup(self)
 
-
-    def setup_submodules(self):
-        submodules = {
-            'hw_setup': {
-                'headers' : [  ],
-                'modules': [ 'iob_reg.v' ]
-            },
-        }
 
     def setup_confs(self):
         super().setup_confs([
