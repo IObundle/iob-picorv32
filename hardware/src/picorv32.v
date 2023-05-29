@@ -670,15 +670,15 @@ module picorv32 #(
    assign is_rdcycle_rdcycleh_rdinstr_rdinstrh = |{instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh};
 
    reg [63:0]              new_ascii_instr;
-   `FORMAL_KEEP reg [63:0] dbg_ascii_instr;
-   `FORMAL_KEEP reg [31:0] dbg_insn_imm;
-   `FORMAL_KEEP reg [4:0] dbg_insn_rs1;
-   `FORMAL_KEEP reg [4:0] dbg_insn_rs2;
-   `FORMAL_KEEP reg [4:0] dbg_insn_rd;
-   `FORMAL_KEEP reg [31:0] dbg_rs1val;
-   `FORMAL_KEEP reg [31:0] dbg_rs2val;
-   `FORMAL_KEEP reg dbg_rs1val_valid;
-   `FORMAL_KEEP reg dbg_rs2val_valid;
+   reg [63:0] dbg_ascii_instr;
+   reg [31:0] dbg_insn_imm;
+   reg [4:0] dbg_insn_rs1;
+   reg [4:0] dbg_insn_rs2;
+   reg [4:0] dbg_insn_rd;
+   reg [31:0] dbg_rs1val;
+   reg [31:0] dbg_rs2val;
+   reg dbg_rs1val_valid;
+   reg dbg_rs2val_valid;
 
    always @* begin
       new_ascii_instr = "\0";
@@ -1161,7 +1161,7 @@ module picorv32 #(
    reg [7:0] cpu_state;
    reg [1:0] irq_state;
 
-   `FORMAL_KEEP reg [127:0] dbg_ascii_state;
+   reg [127:0] dbg_ascii_state;
 
    always @* begin
       dbg_ascii_state = "";
@@ -1534,7 +1534,7 @@ module picorv32 #(
             do_waitirq <= 1;
            end else
          if (decoder_trigger) begin
-            `DEBUG_($display("-- %-0t", $time));
+            `DEBUG_($display("-- %-0t", $time()));
             irq_delay <= irq_active;
             reg_next_pc <= current_pc + (compressed_instr ? 2 : 4);
             if (ENABLE_TRACE)
