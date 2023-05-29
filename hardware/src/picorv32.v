@@ -298,14 +298,14 @@ module picorv32 #(
                           );
    end else begin: g_no_div
       assign pcpi_div_wr = 0;
-      assign pcpi_div_rd = 32'bx;
+      assign pcpi_div_rd = 32'hx;
       assign pcpi_div_wait = 0;
       assign pcpi_div_ready = 0;
    end endgenerate
 
    always @* begin
       pcpi_int_wr = 0;
-      pcpi_int_rd = 32'bx;
+      pcpi_int_rd = 32'hx;
       pcpi_int_wait  = |{ENABLE_PCPI && pcpi_wait,  (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_wait,  ENABLE_DIV && pcpi_div_wait};
       pcpi_int_ready = |{ENABLE_PCPI && pcpi_ready, (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_ready, ENABLE_DIV && pcpi_div_ready};
 
@@ -361,9 +361,9 @@ module picorv32 #(
 
    assign mem_rdata_latched_noshuffle = (mem_xfer || LATCHED_MEM_RDATA) ? mem_rdata : mem_rdata_q;
 
-   assign mem_rdata_latched = COMPRESSED_ISA && mem_la_use_prefetched_high_word ? {16'bx, mem_16bit_buffer} :
+   assign mem_rdata_latched = COMPRESSED_ISA && mem_la_use_prefetched_high_word ? {16'hx, mem_16bit_buffer} :
                   COMPRESSED_ISA && mem_la_secondword ? {mem_rdata_latched_noshuffle[15:0], mem_16bit_buffer} :
-                  COMPRESSED_ISA && mem_la_firstword ? {16'bx, mem_rdata_latched_noshuffle[31:16]} : mem_rdata_latched_noshuffle;
+                  COMPRESSED_ISA && mem_la_firstword ? {16'hx, mem_rdata_latched_noshuffle[31:16]} : mem_rdata_latched_noshuffle;
 
    always @(posedge clk) begin
       if (!resetn) begin
@@ -1344,7 +1344,7 @@ module picorv32 #(
              cpuregs_rs1)
 
      begin
-        decoded_rs = 5'bx;
+        decoded_rs = 5'hx;
         if (ENABLE_REGS_DUALPORT) begin
  `ifndef RISCV_FORMAL_BLACKBOX_REGS
        cpuregs_rs1 = decoded_rs1 ? cpuregs[decoded_rs1] : 0;
@@ -1368,7 +1368,7 @@ module picorv32 #(
 
    always @(posedge clk) begin
       trap <= 0;
-      reg_sh <= 5'bx;
+      reg_sh <= 5'hx;
       reg_out <= 'bx;
       set_mem_do_rinst = 0;
       set_mem_do_rdata = 0;
