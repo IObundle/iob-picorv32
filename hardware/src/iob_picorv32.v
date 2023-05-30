@@ -78,7 +78,7 @@ module iob_picorv32 #(
       .RST_VAL(0)
    ) wack_reg (
       .clk_i (clk_i),
-      .arst_i(arst_i),
+      .arst_i(rst_i),
       .cke_i (cke_i),
       .data_i(iob_wack_nxt),
       .data_o(iob_wack)
