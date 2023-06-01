@@ -32,6 +32,7 @@ class iob_picorv32(iob_module):
         setup(cls)
 
 
+    @classmethod
     def _setup_confs(cls):
         super()._setup_confs([
                 # Macros
@@ -47,6 +48,7 @@ class iob_picorv32(iob_module):
                 {'name':'USE_EXTMEM', 'type':'P', 'val':'0', 'min':'0', 'max':'1', 'descr':'Select if configured for usage with external memory.'},
             ])
 
+    @classmethod
     def _setup_ios(cls):
         cls.ios += [
             {'name': 'general', 'descr':'General interface signals', 'ports': [
@@ -65,5 +67,6 @@ class iob_picorv32(iob_module):
             ]}
         ]
 
+    @classmethod
     def _setup_block_groups(cls):
         cls.block_groups += []
