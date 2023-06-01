@@ -26,7 +26,7 @@
 //`define LA_IF
 
 module iob_picorv32 #(
-    `include "iob_picorv32_params.vh"
+    `include "iob_picorv32_params.vs"
     ) (
     input               clk_i,
     input               rst_i,
@@ -49,10 +49,10 @@ module iob_picorv32 #(
 
    //modify addresses if DDR used according to boot status
    generate
-      if (USE_EXTMEM) begin
+      if (USE_EXTMEM) begin: g_use_extmem
          assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
          assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
-      end else begin
+      end else begin: g_not_use_extmem
          assign ibus_req = cpu_i_req;
          assign dbus_req = cpu_d_req;
       end
@@ -63,7 +63,7 @@ module iob_picorv32 #(
    assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
-   
+
    reg iob_wack;
    wire cpu_avalid;
    wire [`WSTRB_W-1:0] cpu_wstrb;
@@ -73,7 +73,16 @@ module iob_picorv32 #(
    wire cpu_ready  = (iob_rvalid | iob_wack) & cpu_avalid;
 
    wire iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
-   iob_reg #(1,0) wack_reg (clk_i, rst_i, cke_i, iob_wack_nxt, iob_wack);
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) wack_reg (
+      .clk_i (clk_i),
+      .arst_i(rst_i),
+      .cke_i (cke_i),
+      .data_i(iob_wack_nxt),
+      .data_o(iob_wack)
+   );
 
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
@@ -81,7 +90,7 @@ module iob_picorv32 #(
 `else
    assign cpu_req[`AVALID(0)] = cpu_avalid & ~cpu_ready;
 `endif
-   
+
 
    //intantiate picorv32
    picorv32 #(
@@ -135,7 +144,7 @@ module iob_picorv32 #(
                   .irq           (32'd0),
                   .eoi           (),
                   .trace_valid   (),
-                  .trace_data    ()                  
+                  .trace_data    ()
                   );
-   
+
 endmodule
