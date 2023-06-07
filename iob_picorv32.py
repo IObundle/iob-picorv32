@@ -28,6 +28,9 @@ class iob_picorv32(iob_module):
         cls._setup_ios()
         cls._setup_block_groups()
 
+        # Copy sources of this module to the build directory
+        super()._run_setup()
+
         # Setup core using LIB function
         setup(cls)
 
