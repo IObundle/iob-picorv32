@@ -59,7 +59,7 @@ module iob_picorv32 #(
          wire cpu_d_addr_msb;
 
          assign cpu_i_addr_msb = ~boot;
-         assign cpu_d_addr_msb = (cpu_d_req[Ebit]^~boot)&(~(|cpu_i_req[Ebit -: N_PERIPHERALS]));
+         assign cpu_d_addr_msb = cpu_d_req[Ebit]&~boot;
 
          assign ibus_req = {cpu_i_req[Vbit], cpu_i_addr_msb, cpu_i_req[Ebit-1:0]};
          assign dbus_req = {cpu_d_req[Vbit], cpu_d_addr_msb, cpu_d_req[Ebit-1:0]};
