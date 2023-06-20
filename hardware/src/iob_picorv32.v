@@ -43,23 +43,31 @@ module iob_picorv32 #(
     input [`RESP_W-1:0] dbus_resp
     );
 
+   localparam integer Vbit = `REQ_W-1;
+   localparam integer AddrMsb = `REQ_W-2;
+
    //create picorv32 native interface concat buses
    wire [1*`REQ_W-1:0]  cpu_req, cpu_i_req, cpu_d_req;
    wire [1*`RESP_W-1:0] cpu_resp;
 
+   wire cpu_instr;
+
+   wire cpu_i_addr_msb;
+   wire cpu_d_addr_msb;
    //modify addresses if DDR used according to boot status
    generate
       if (USE_EXTMEM) begin: g_use_extmem
-         assign ibus_req = {cpu_i_req[V_BIT], ~boot, cpu_i_req[`REQ_W-3:0]};
-         assign dbus_req = {cpu_d_req[V_BIT], (cpu_d_req[E_BIT]^~boot)&~cpu_d_req[P_BIT], cpu_d_req[`REQ_W-3:0]};
+         assign cpu_i_addr_msb = ~boot;
+         assign cpu_d_addr_msb = cpu_d_req[AddrMsb];
       end else begin: g_not_use_extmem
-         assign ibus_req = cpu_i_req;
-         assign dbus_req = cpu_d_req;
+         assign cpu_i_addr_msb = 1'b0;
+         assign cpu_d_addr_msb = 1'b0;
       end
    endgenerate
+   assign ibus_req = {cpu_i_req[Vbit], cpu_i_addr_msb, cpu_i_req[AddrMsb-1:0]};
+   assign dbus_req = {cpu_d_req[Vbit], cpu_d_addr_msb, cpu_d_req[AddrMsb-1:0]};
 
    //split cpu bus into instruction and data buses
-   wire   cpu_instr;
    assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
