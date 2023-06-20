@@ -58,7 +58,7 @@ module iob_picorv32 #(
    generate
       if (USE_EXTMEM) begin: g_use_extmem
          assign cpu_i_addr_msb = ~boot;
-         assign cpu_d_addr_msb = cpu_d_req[AddrMsb]&~boot;
+         assign cpu_d_addr_msb = cpu_d_req[AddrMsb];
       end else begin: g_not_use_extmem
          assign cpu_i_addr_msb = 1'b0;
          assign cpu_d_addr_msb = 1'b0;
