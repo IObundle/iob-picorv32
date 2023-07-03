@@ -47,13 +47,23 @@ module iob_picorv32 #(
    localparam integer AddrMsb = `REQ_W-2;
 
    //create picorv32 native interface concat buses
-   wire [1*`REQ_W-1:0]  cpu_req, cpu_i_req, cpu_d_req;
+   wire [1*`REQ_W-1:0]  cpu_i_req;
+   wire [1*`REQ_W-1:0]  cpu_d_req;
+   wire [1*`REQ_W-1:0]  cpu_req;
    wire [1*`RESP_W-1:0] cpu_resp;
+   wire                 cpu_i_addr_msb;
+   wire                 cpu_d_addr_msb;
+   wire                 cpu_instr;
+   wire                 cpu_avalid;
+   wire                 cpu_avalid_r;
+   wire                 cpu_we_r;
+   wire [`WSTRB_W-1:0]  cpu_wstrb;
+   wire                 cpu_ack;
+   wire                 iob_rvalid;
+   wire                 iob_ready;
+   wire                 iob_wack;
+   wire                 iob_wack_r;
 
-   wire cpu_instr;
-
-   wire cpu_i_addr_msb;
-   wire cpu_d_addr_msb;
    //modify addresses if DDR used according to boot status
    generate
       if (USE_EXTMEM) begin: g_use_extmem
@@ -72,31 +82,30 @@ module iob_picorv32 #(
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
    assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
 
-   reg iob_wack;
-   wire cpu_avalid;
-   wire [`WSTRB_W-1:0] cpu_wstrb;
    assign cpu_req[`WSTRB(0)] = cpu_wstrb;
-   wire iob_rvalid = cpu_resp[`RVALID(0)];
-   wire iob_ready  = cpu_resp[`READY(0)];
-   wire cpu_ready  = (iob_rvalid | iob_wack) & cpu_avalid;
+   assign iob_rvalid = cpu_resp[`RVALID(0)];
+   assign iob_ready  = cpu_resp[`READY(0)];
+   assign cpu_ack    = (iob_rvalid | iob_wack_r);
+   assign iob_wack   = cpu_avalid & (| cpu_wstrb) & iob_ready;
 
-   wire iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
-   iob_reg #(
+   iob_reg_re #(
       .DATA_W (1),
       .RST_VAL(0)
    ) wack_reg (
       .clk_i (clk_i),
       .arst_i(rst_i),
       .cke_i (cke_i),
-      .data_i(iob_wack_nxt),
-      .data_o(iob_wack)
+      .rst_i (cpu_ack),
+      .en_i  (1'b1),
+      .data_i(iob_wack),
+      .data_o(iob_wack_r)
    );
 
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
    always @(posedge clk_i) cpu_avalid <= mem_la_read | mem_la_write;
 `else
-   assign cpu_req[`AVALID(0)] = cpu_avalid & ~cpu_ready;
+   assign cpu_req[`AVALID(0)] = cpu_avalid & ~cpu_ack;
 `endif
 
 
@@ -138,7 +147,7 @@ module iob_picorv32 #(
                   .mem_la_wstrb  (cpu_wstrb),
 `endif
                   .mem_rdata     (cpu_resp[`RDATA(0)]),
-                  .mem_ready     (cpu_ready),
+                  .mem_ready     (cpu_ack),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
