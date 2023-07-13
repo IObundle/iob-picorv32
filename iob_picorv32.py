@@ -1,39 +1,26 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 
 from iob_module import iob_module
-from setup import setup
 
 # Submodules
 from iob_reg import iob_reg
 
 
 class iob_picorv32(iob_module):
-    name='iob_picorv32'
-    version='V0.10'
-    flows=''
-    setup_dir=os.path.dirname(__file__)
+    name = 'iob_picorv32'
+    version = 'V0.10'
+    flows = ''
+    setup_dir = os.path.dirname(__file__)
 
     @classmethod
-    def _run_setup(cls):
-        # Hardware headers & modules
-        iob_reg.setup()
-
-        # Verilog modules instances
-        # TODO
-
-        cls._setup_confs()
-        cls._setup_ios()
-        cls._setup_block_groups()
-
-        # Copy sources of this module to the build directory
-        super()._run_setup()
-
-        # Setup core using LIB function
-        setup(cls)
-
+    def _create_submodules_list(cls):
+        ''' Create submodules list with dependencies of this module
+        '''
+        super()._create_submodules_list([
+            iob_reg,
+        ])
 
     @classmethod
     def _setup_confs(cls):
