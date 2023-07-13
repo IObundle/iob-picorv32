@@ -9,19 +9,18 @@ from iob_reg import iob_reg
 
 
 class iob_picorv32(iob_module):
-    name='iob_picorv32'
-    version='V0.10'
-    flows=''
-    setup_dir=os.path.dirname(__file__)
+    name = 'iob_picorv32'
+    version = 'V0.10'
+    flows = ''
+    setup_dir = os.path.dirname(__file__)
 
     @classmethod
-    def _specific_setup(cls):
-        # Hardware headers & modules
-        iob_reg.setup()
-
-        # Verilog modules instances
-        # TODO
-
+    def _create_submodules_list(cls):
+        ''' Create submodules list with dependencies of this module
+        '''
+        super()._create_submodules_list([
+            iob_reg,
+        ])
 
     @classmethod
     def _setup_confs(cls):
