@@ -20,7 +20,7 @@
 
 `timescale 1 ns / 1 ps
 `include "iob_picorv32_conf.vh"
-`include "iob_lib.vh"
+`include "iob_utils.vh"
 
 //the look ahead interface is not working because mem_instr is unknown at request
 //`define LA_IF
