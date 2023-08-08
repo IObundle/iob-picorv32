@@ -31,16 +31,16 @@ module iob_picorv32 #(
     input               clk_i,
     input               rst_i,
     input               cke_i,
-    input               boot,
-    output              trap,
+    input               boot_i,
+    output              trap_o,
 
     // instruction bus
-    output [`REQ_W-1:0] ibus_req,
-    input [`RESP_W-1:0] ibus_resp,
+    output [`REQ_W-1:0] ibus_req_o,
+    input [`RESP_W-1:0] ibus_resp_i,
 
     // data bus
-    output [`REQ_W-1:0] dbus_req,
-    input [`RESP_W-1:0] dbus_resp
+    output [`REQ_W-1:0] dbus_req_o,
+    input [`RESP_W-1:0] dbus_resp_i
     );
 
    localparam integer Vbit = `REQ_W-1;
@@ -64,23 +64,23 @@ module iob_picorv32 #(
    wire                 iob_wack;
    wire                 iob_wack_r;
 
-   //modify addresses if DDR used according to boot status
+   //modify addresses if DDR used according to boot_i status
    generate
       if (USE_EXTMEM) begin: g_use_extmem
-         assign cpu_i_addr_msb = ~boot;
+         assign cpu_i_addr_msb = ~boot_i;
          assign cpu_d_addr_msb = cpu_d_req[AddrMsb];
       end else begin: g_not_use_extmem
          assign cpu_i_addr_msb = 1'b0;
          assign cpu_d_addr_msb = 1'b0;
       end
    endgenerate
-   assign ibus_req = {cpu_i_req[Vbit], cpu_i_addr_msb, cpu_i_req[AddrMsb-1:0]};
-   assign dbus_req = {cpu_d_req[Vbit], cpu_d_addr_msb, cpu_d_req[AddrMsb-1:0]};
+   assign ibus_req_o = {cpu_i_req[Vbit], cpu_i_addr_msb, cpu_i_req[AddrMsb-1:0]};
+   assign dbus_req_o = {cpu_d_req[Vbit], cpu_d_addr_msb, cpu_d_req[AddrMsb-1:0]};
 
    //split cpu bus into instruction and data buses
    assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
-   assign cpu_resp = cpu_instr? ibus_resp: dbus_resp;
+   assign cpu_resp = cpu_instr? ibus_resp_i: dbus_resp_i;
 
    assign cpu_req[`WSTRB(0)] = cpu_wstrb;
    assign iob_rvalid = cpu_resp[`RVALID(0)];
@@ -119,7 +119,7 @@ module iob_picorv32 #(
    picorv32_core (
                   .clk           (clk_i),
                   .resetn        (~rst_i),
-                  .trap          (trap),
+                  .trap          (trap_o),
                   .mem_instr     (cpu_instr),
 `ifndef LA_IF
                   //memory interface
