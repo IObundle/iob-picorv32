@@ -39,18 +39,18 @@ class iob_picorv32(iob_module):
     def _setup_ios(cls):
         cls.ios += [
             {'name': 'general', 'descr':'General interface signals', 'ports': [
-                {'name':"clk_i", 'type':"I", 'n_bits':'1', 'descr':"CPU clock input"},
-                {'name':"rst_i", 'type':"I", 'n_bits':'1', 'descr':"CPU reset input"},
-                {'name':"boot_i", 'type':"I", 'n_bits':'1', 'descr':"CPU boot input"},
-                {'name':"trap_o", 'type':"O", 'n_bits':'1', 'descr':"CPU trap output"},
+                {'name':"clk_i", 'type':"input", 'n_bits':'1', 'descr':"CPU clock input"},
+                {'name':"rst_i", 'type':"input", 'n_bits':'1', 'descr':"CPU reset input"},
+                {'name':"boot_i", 'type':"input", 'n_bits':'1', 'descr':"CPU boot input"},
+                {'name':"trap_o", 'type':"output", 'n_bits':'1', 'descr':"CPU trap output"},
             ]},
             {'name': 'instruction_bus', 'descr':'Instruction bus', 'ports': [
-                {'name':"ibus_req_o", 'type':"O", 'n_bits':'`REQ_W', 'descr':"Instruction bus request"},
-                {'name':"ibus_resp_i", 'type':"I", 'n_bits':'`RESP_W', 'descr':"Instruction bus response"},
+                {'name':"ibus_req_o", 'type':"output", 'n_bits':'`REQ_W', 'descr':"Instruction bus request"},
+                {'name':"ibus_resp_i", 'type':"input", 'n_bits':'`RESP_W', 'descr':"Instruction bus response"},
             ]},
             {'name': 'data_bus', 'descr':'Data bus', 'ports': [
-                {'name':"dbus_req_o", 'type':"O", 'n_bits':'`REQ_W', 'descr':"Data bus request"},
-                {'name':"dbus_resp_i", 'type':"I", 'n_bits':'`RESP_W', 'descr':"Data bus response"},
+                {'name':"dbus_req_o", 'type':"output", 'n_bits':'`REQ_W', 'descr':"Data bus request"},
+                {'name':"dbus_resp_i", 'type':"input", 'n_bits':'`RESP_W', 'descr':"Data bus response"},
             ]}
         ]
 
