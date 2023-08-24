@@ -25,29 +25,7 @@
 module iob_picorv32 #(
   `include "iob_picorv32_params.vs"
    ) (
-   input               clk_i,
-   input               rst_i,
-   input               cke_i,
-   input               boot_i,
-   output              trap_o,
-
-   // instruction bus
-   output         ibus_avalid_o,
-   output [31:0]  ibus_address_o,
-   output [31:0]  ibus_wdata_o,
-   output [4-1:0] ibus_wstrb_o,
-   input  [31:0]  ibus_rdata_i,
-   input          ibus_rvalid_i,
-   input          ibus_ready_i,
-
-   // data bus
-   output         dbus_avalid_o,
-   output [31:0]  dbus_address_o,
-   output [31:0]  dbus_wdata_o,
-   output [4-1:0] dbus_wstrb_o,
-   input  [31:0]  dbus_rdata_i,
-   input          dbus_rvalid_i,
-   input          dbus_ready_i
+   `include "iob_picorv32_io.vs"
    );
 
    wire         cpu_instr;
