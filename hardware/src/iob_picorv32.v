@@ -20,79 +20,104 @@
 
 `timescale 1 ns / 1 ps
 `include "iob_picorv32_conf.vh"
+`include "iob_utils.vh"
 
-//the look ahead interface is not working because mem_instr is unknown at request
-//`define LA_IF
-
-module iob_picorv32 
-  (
-   input         clk_i,
-   input         rst_i,
-   input         cke_i,
-   output        trap,
+module iob_picorv32 #(
+  `include "iob_picorv32_params.vs"
+   ) (
+   input               clk_i,
+   input               rst_i,
+   input               cke_i,
+   input               boot_i,
+   output              trap_o,
 
    // instruction bus
-   output        ibus_avalid,
-   output        ibus_aready,
-   output [31:0] ibus_address,
-   input [31:0]  ibus_rdata,
-   input         ibus_rvalid,
+   output         ibus_avalid_o,
+   output [31:0]  ibus_address_o,
+   output [31:0]  ibus_wdata_o,
+   output [4-1:0] ibus_wstrb_o,
+   input  [31:0]  ibus_rdata_i,
+   input          ibus_rvalid_i,
+   input          ibus_ready_i,
 
    // data bus
-   output        dbus_avalid,
-   output [31:0] dbus_address,
-   output [31:0] dbus_wdata,
-   output [3:0]  dbus_wstrb,
-   input [31:0]  dbus_rdata,
-   input         dbus_rvalid,
-   input         dbus_ready
-    );
+   output         dbus_avalid_o,
+   output [31:0]  dbus_address_o,
+   output [31:0]  dbus_wdata_o,
+   output [4-1:0] dbus_wstrb_o,
+   input  [31:0]  dbus_rdata_i,
+   input          dbus_rvalid_i,
+   input          dbus_ready_i
+   );
 
+   wire         cpu_instr;
 
    // cpu bus
-   wire cpu_avalid;
-   wire [31:0] cpu_address;
-   wire [31:0] cpu_wdata;
-   wire [3:0] cpu_wstrb;
-   wire [31:0] cpu_rdata;
-   wire cpu_ready;
-   
+   wire         cpu_avalid;
+   wire [31:0]  cpu_address;
+   wire [31:0]  cpu_wdata;
+   wire [4-1:0] cpu_wstrb;
+   wire [31:0]  cpu_rdata;
+   wire         cpu_ready;
+
+   // Output IOb bus
+   wire         out_avalid;
+   wire [31:0]  out_address;
+   wire [31:0]  out_wdata;
+   wire [4-1:0] out_wstrb;
+   wire [31:0]  in_rdata;
+   wire         in_rvalid;
+   wire         in_ready;
+
+   assign ibus_avalid_o  = cpu_instr? out_avalid : 1'b0;
+   assign ibus_address_o = cpu_instr? out_address : 32'0;
+   assign ibus_wdata_o   = cpu_instr? out_wdata : 32'h0;
+   assign ibus_wstrb_o   = cpu_instr? out_wstrb : 4'h0;
+
+   assign dbus_avalid_o  = !cpu_instr? out_avalid : 1'b0;
+   assign dbus_address_o = !cpu_instr? out_address : 32'h0;
+   assign dbus_wdata_o   = !cpu_instr? out_wdata : 32'h0;
+   assign dbus_wstrb_o   = !cpu_instr? out_wstrb : 4'h0;
+
+   assign out_avalid     = cpu_avalid & ~cpu_ready;
+   assign out_address    = cpu_address;
+   assign out_wdata      = cpu_wdata;
+   assign out_wstrb      = cpu_wstrb;
+
+   assign in_rdata       = cpu_instr? ibus_rdata : dbus_rdata;
+   assign in_rvalid      = cpu_instr? ibus_rvalid : dbus_rvalid;
+   assign in_ready       = cpu_instr? ibus_ready : dbus_ready;
+
+   assign cpu_ready      = cpu_avalid & (in_rvalid | dbus_wack);
+
    // write acknowledge
    wire dbus_wack;
    wire dbus_wack_nxt = cpu_avalid & cpu_ready & (| cpu_wstrb) ;
-   iob_reg #(1,0) wack_reg 
-     (
+   iob_reg_r #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) wack_reg (
       .clk_i(clk_i),
-      .rst_i(rst_i),
+      .arst_i(rst_i),
+      .cke_i(cke_i),
+      .rst_i(cpu_ready),
       .d_i(dbus_wack_nxt),
       .q_o(dbus_wack)
-      );
-      
-   //split cpu bus into instruction and data buses
-   wire   cpu_instr;
-   assign ibus_avalid = cpu_avalid & cpu_instr;
-   assign dbus_avalid = cpu_avalid & -cpu_instr;
-   assign ibus_address = cpu_address;
-   assign dbus_address = cpu_address;
-   assign dbus_wdata = cpu_wdata;
-   assign dbus_wstrb = cpu_wstrb;
-   assign cpu_rdata = cpu_instr? ibus_rdata : dbus_rdata;
-   assign cpu_ready = (ibus_rvalid | dbus_rvalid | iob_wack) & cpu_avalid;
+   );
+
 
    //intantiate picorv32
-   picorv32 
-     #(
-       .COMPRESSED_ISA(1),
-       .ENABLE_FAST_MUL(1),
-       .ENABLE_DIV(1),
-       .BARREL_SHIFTER(1),
-       .PROGADDR_RESET(32'h 1000_0000)
-       )
-   picorv32_core 
-     (
+   picorv32 #(
+         .COMPRESSED_ISA(USE_COMPRESSED),
+         .ENABLE_FAST_MUL(USE_MUL_DIV),
+         .ENABLE_DIV(USE_MUL_DIV),
+         .BARREL_SHIFTER(1),
+         .PROGADDR_RESET(32'h 1000_0000)
+         )
+   picorv32_core (
       .clk           (clk_i),
       .resetn        (~rst_i),
-      .trap          (trap),
+      .trap          (trap_o),
       .mem_instr     (cpu_instr),
 
       //memory interface
@@ -119,11 +144,12 @@ module iob_picorv32
       .pcpi_rd       (32'd0),
       .pcpi_wait     (1'b0),
       .pcpi_ready    (1'b0),
+
       // IRQ
       .irq           (32'd0),
       .eoi           (),
       .trace_valid   (),
-      .trace_data    ()                  
+      .trace_data    ()
       );
-   
+
 endmodule
