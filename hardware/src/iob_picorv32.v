@@ -30,47 +30,39 @@ module iob_picorv32 #(
 
    wire         cpu_instr;
 
-   // cpu bus
+   // CPU bus
    wire         cpu_avalid;
-   wire [31:0]  cpu_address;
+   wire [31:0]  cpu_addr;
    wire [31:0]  cpu_wdata;
    wire [4-1:0] cpu_wstrb;
    wire [31:0]  cpu_rdata;
    wire         cpu_ready;
 
-   // Output IOb bus
+   // I/O helper signals
    wire         out_avalid;
-   wire [31:0]  out_address;
-   wire [31:0]  out_wdata;
-   wire [4-1:0] out_wstrb;
-   wire [31:0]  in_rdata;
-   wire         in_rvalid;
    wire         in_ready;
-
-   assign ibus_avalid_o  = cpu_instr? out_avalid : 1'b0;
-   assign ibus_address_o = cpu_instr? out_address : 32'0;
-   assign ibus_wdata_o   = cpu_instr? out_wdata : 32'h0;
-   assign ibus_wstrb_o   = cpu_instr? out_wstrb : 4'h0;
-
-   assign dbus_avalid_o  = !cpu_instr? out_avalid : 1'b0;
-   assign dbus_address_o = !cpu_instr? out_address : 32'h0;
-   assign dbus_wdata_o   = !cpu_instr? out_wdata : 32'h0;
-   assign dbus_wstrb_o   = !cpu_instr? out_wstrb : 4'h0;
+   wire         in_rvalid;
 
    assign out_avalid     = cpu_avalid & ~cpu_ready;
-   assign out_address    = cpu_address;
-   assign out_wdata      = cpu_wdata;
-   assign out_wstrb      = cpu_wstrb;
+   assign in_ready       = cpu_instr? ibus_ready_i : dbus_ready_i;
+   assign in_rvalid      = cpu_instr? ibus_rvalid_i  : dbus_rvalid_i;
 
-   assign in_rdata       = cpu_instr? ibus_rdata : dbus_rdata;
-   assign in_rvalid      = cpu_instr? ibus_rvalid : dbus_rvalid;
-   assign in_ready       = cpu_instr? ibus_ready : dbus_ready;
+   assign cpu_rdata      = cpu_instr? ibus_rdata_i  : dbus_rdata_i;
+   assign cpu_ready      = in_rvalid | dbus_wack;
 
-   assign cpu_ready      = cpu_avalid & (in_rvalid | dbus_wack);
+   assign ibus_avalid_o  = cpu_instr? out_avalid : 1'b0;
+   assign ibus_addr_o    = cpu_addr;
+   assign ibus_wdata_o   = cpu_wdata;
+   assign ibus_wstrb_o   = cpu_wstrb;
+
+   assign dbus_avalid_o  = !cpu_instr? out_avalid : 1'b0;
+   assign dbus_addr_o    = cpu_addr;
+   assign dbus_wdata_o   = cpu_wdata;
+   assign dbus_wstrb_o   = cpu_wstrb;
 
    // write acknowledge
    wire dbus_wack;
-   wire dbus_wack_nxt = cpu_avalid & cpu_ready & (| cpu_wstrb) ;
+   wire dbus_wack_nxt = cpu_avalid & (| cpu_wstrb) & in_ready;
    iob_reg_r #(
       .DATA_W (1),
       .RST_VAL(0)
@@ -91,8 +83,7 @@ module iob_picorv32 #(
          .ENABLE_DIV(USE_MUL_DIV),
          .BARREL_SHIFTER(1),
          .PROGADDR_RESET(32'h 1000_0000)
-         )
-   picorv32_core (
+   ) picorv32_core (
       .clk           (clk_i),
       .resetn        (~rst_i),
       .trap          (trap_o),
@@ -100,7 +91,7 @@ module iob_picorv32 #(
 
       //memory interface
       .mem_valid     (cpu_avalid),
-      .mem_addr      (cpu_address),
+      .mem_addr      (cpu_addr),
       .mem_wdata     (cpu_wdata),
       .mem_wstrb     (cpu_wstrb),
       .mem_rdata     (cpu_rdata),
@@ -128,6 +119,6 @@ module iob_picorv32 #(
       .eoi           (),
       .trace_valid   (),
       .trace_data    ()
-      );
+   );
 
 endmodule
