@@ -31,12 +31,12 @@ module iob_picorv32 #(
    wire         cpu_instr;
 
    // CPU bus
-   wire         cpu_avalid;
-   wire [31:0]  cpu_addr;
-   wire [31:0]  cpu_wdata;
-   wire [4-1:0] cpu_wstrb;
-   wire [31:0]  cpu_rdata;
-   wire         cpu_ready;
+   wire                cpu_avalid;
+   wire [ADDR_W-1:0]   cpu_addr;
+   wire [DATA_W-1:0]   cpu_wdata;
+   wire [DATA_W/8-1:0] cpu_wstrb;
+   wire [DATA_W-1:0]   cpu_rdata;
+   wire                cpu_ready;
 
    // I/O helper signals
    wire         out_avalid;
@@ -71,8 +71,8 @@ module iob_picorv32 #(
       .arst_i(rst_i),
       .cke_i(cke_i),
       .rst_i(cpu_ready),
-      .d_i(dbus_wack_nxt),
-      .q_o(dbus_wack)
+      .data_i(dbus_wack_nxt),
+      .data_o(dbus_wack)
    );
 
 
