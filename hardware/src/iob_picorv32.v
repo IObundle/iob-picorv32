@@ -85,8 +85,7 @@ module iob_picorv32 #(
          .COMPRESSED_ISA(USE_COMPRESSED),
          .ENABLE_FAST_MUL(USE_MUL_DIV),
          .ENABLE_DIV(USE_MUL_DIV),
-         .BARREL_SHIFTER(1),
-         .PROGADDR_RESET(32'h 1000_0000)
+         .BARREL_SHIFTER(1)
    ) picorv32_core (
       .clk           (clk_i),
       .resetn        (~rst_i),
