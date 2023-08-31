@@ -50,13 +50,17 @@ module iob_picorv32 #(
    assign cpu_rdata      = cpu_instr? ibus_rdata_i  : dbus_rdata_i;
    assign cpu_ready      = in_rvalid | dbus_wack;
 
+   // Below ignore the first 2 LSBs of cpu_addr. The address must always be multiple of 4, so whichever address we give
+   // to the CPU through software will always only read the part multiple of 4 and there's no need anymore to be careful
+   // about that.
+
    assign ibus_avalid_o  = cpu_instr? out_avalid : 1'b0;
-   assign ibus_addr_o    = cpu_addr;
+   assign ibus_addr_o    = cpu_addr >> 2;
    assign ibus_wdata_o   = cpu_wdata;
    assign ibus_wstrb_o   = cpu_wstrb;
 
    assign dbus_avalid_o  = !cpu_instr? out_avalid : 1'b0;
-   assign dbus_addr_o    = cpu_addr;
+   assign dbus_addr_o    = cpu_addr >> 2;
    assign dbus_wdata_o   = cpu_wdata;
    assign dbus_wstrb_o   = cpu_wstrb;
 
@@ -81,8 +85,7 @@ module iob_picorv32 #(
          .COMPRESSED_ISA(USE_COMPRESSED),
          .ENABLE_FAST_MUL(USE_MUL_DIV),
          .ENABLE_DIV(USE_MUL_DIV),
-         .BARREL_SHIFTER(1),
-         .PROGADDR_RESET(32'h 1000_0000)
+         .BARREL_SHIFTER(1)
    ) picorv32_core (
       .clk           (clk_i),
       .resetn        (~rst_i),
