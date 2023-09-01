@@ -43,7 +43,11 @@ module iob_picorv32 #(
    wire         in_ready;
    wire         in_rvalid;
 
-   assign out_avalid     = cpu_avalid & ~cpu_ready;
+   // write acknowledge
+   wire dbus_wack;
+   wire dbus_wack_nxt = cpu_avalid & (| cpu_wstrb) & in_ready;
+
+   assign out_avalid     = cpu_avalid;// & ~cpu_ready; // todo Check if this is correct (CPU seems to work without it)
    assign in_ready       = cpu_instr? ibus_ready_i : dbus_ready_i;
    assign in_rvalid      = cpu_instr? ibus_rvalid_i  : dbus_rvalid_i;
 
@@ -64,9 +68,6 @@ module iob_picorv32 #(
    assign dbus_wdata_o   = cpu_wdata;
    assign dbus_wstrb_o   = cpu_wstrb;
 
-   // write acknowledge
-   wire dbus_wack;
-   wire dbus_wack_nxt = cpu_avalid & (| cpu_wstrb) & in_ready;
    iob_reg_r #(
       .DATA_W (1),
       .RST_VAL(0)
