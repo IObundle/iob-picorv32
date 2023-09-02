@@ -49,9 +49,9 @@ module iob_picorv32 #(
 
    assign out_avalid     = cpu_avalid;// & ~cpu_ready; // todo Check if this is correct (CPU seems to work without it)
    assign in_ready       = cpu_instr? ibus_ready_i : dbus_ready_i;
-   assign in_rvalid      = cpu_instr? ibus_rvalid_i  : dbus_rvalid_i;
+   assign in_rvalid      = cpu_instr? ibus_rvalid_i : dbus_rvalid_i;
 
-   assign cpu_rdata      = cpu_instr? ibus_rdata_i  : dbus_rdata_i;
+   assign cpu_rdata      = cpu_instr? ibus_rdata_i : dbus_rdata_i;
    assign cpu_ready      = in_rvalid | dbus_wack;
 
    // Below ignore the first 2 LSBs of cpu_addr. The address must always be multiple of 4, so whichever address we give
@@ -59,12 +59,12 @@ module iob_picorv32 #(
    // about that.
 
    assign ibus_avalid_o  = cpu_instr? out_avalid : 1'b0;
-   assign ibus_addr_o    = cpu_addr >> 2;
+   assign ibus_addr_o    = cpu_addr & 32'hFFFFFFFC;
    assign ibus_wdata_o   = cpu_wdata;
    assign ibus_wstrb_o   = cpu_wstrb;
 
    assign dbus_avalid_o  = !cpu_instr? out_avalid : 1'b0;
-   assign dbus_addr_o    = cpu_addr >> 2;
+   assign dbus_addr_o    = cpu_addr & 32'hFFFFFFFC;
    assign dbus_wdata_o   = cpu_wdata;
    assign dbus_wstrb_o   = cpu_wstrb;
 
