@@ -2,41 +2,42 @@
 
 import os
 
+# Find python modules
+if __name__ == "__main__":
+    import sys
+
+    sys.path.append("./submodules/LIB/scripts")
 from iob_module import iob_module
+
+if __name__ == "__main__":
+    iob_module.find_modules()
 
 # Submodules
 from iob_reg import iob_reg
 
 
 class iob_picorv32(iob_module):
-    name = 'iob_picorv32'
-    version = 'V0.10'
-    flows = ''
-    setup_dir = os.path.dirname(__file__)
-
     @classmethod
-    def _create_submodules_list(cls):
-        ''' Create submodules list with dependencies of this module
-        '''
-        super()._create_submodules_list([
+    def _init_attributes(cls):
+        """Init module attributes"""
+        cls.name = 'iob_picorv32'
+        cls.version = 'V0.10'
+        cls.flows = ''
+        cls.setup_dir = os.path.dirname(__file__)
+        cls.submodules = [
             iob_reg,
-        ])
+        ]
 
-    @classmethod
-    def _setup_confs(cls):
-        super()._setup_confs([
-                # Macros
+        cls.confs = [
+            # Macros
+            # Parameters
+            {'name':'ADDR_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
+            {'name':'DATA_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
+            {'name':'USE_COMPRESSED', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
+            {'name':'USE_MUL_DIV', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
+            {'name':'USE_EXTMEM', 'type':'P', 'val':'0', 'min':'0', 'max':'1', 'descr':'Select if configured for usage with external memory.'},
+        ]
 
-                # Parameters
-                {'name':'ADDR_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
-                {'name':'DATA_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
-                {'name':'USE_COMPRESSED', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
-                {'name':'USE_MUL_DIV', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
-                {'name':'USE_EXTMEM', 'type':'P', 'val':'0', 'min':'0', 'max':'1', 'descr':'Select if configured for usage with external memory.'},
-            ])
-
-    @classmethod
-    def _setup_ios(cls):
         cls.ios += [
             {
                 "name": "clk_rst",
@@ -107,6 +108,8 @@ class iob_picorv32(iob_module):
                 ]}
         ]
 
-    @classmethod
-    def _setup_block_groups(cls):
         cls.block_groups += []
+
+
+if __name__ == "__main__":
+    iob_picorv32.setup_as_top_module()
