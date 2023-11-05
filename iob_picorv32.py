@@ -6,7 +6,7 @@ from iob_module import iob_module
 
 # Submodules
 from iob_reg import iob_reg
-
+from iob_edge_detect import iob_edge_detect
 
 class iob_picorv32(iob_module):
     name = 'iob_picorv32'
@@ -20,6 +20,7 @@ class iob_picorv32(iob_module):
         '''
         super()._create_submodules_list([
             iob_reg,
+            iob_edge_detect,
         ])
 
     @classmethod

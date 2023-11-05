@@ -62,7 +62,7 @@ module iob_picorv32 #(
    wire                 iob_rvalid;
    wire                 iob_ready;
    wire                 iob_wack;
-   wire                 iob_wack_r;
+   wire                 iob_wack_nxt;
 
    //modify addresses if DDR used according to boot_i status
    generate
@@ -80,32 +80,46 @@ module iob_picorv32 #(
    //split cpu bus into instruction and data buses
    assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
    assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
-   assign cpu_resp = cpu_instr? ibus_resp_i: dbus_resp_i;
+   assign cpu_resp  = cpu_instr? ibus_resp_i: dbus_resp_i;
 
    assign cpu_req[`WSTRB(0)] = cpu_wstrb;
    assign iob_rvalid = cpu_resp[`RVALID(0)];
    assign iob_ready  = cpu_resp[`READY(0)];
-   assign cpu_ack    = (iob_rvalid | iob_wack_r);
-   assign iob_wack   = cpu_avalid & (| cpu_wstrb) & iob_ready;
+   assign cpu_ack    = (iob_rvalid | iob_wack);
+   assign iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
 
-   iob_reg_re #(
+   iob_reg #(
       .DATA_W (1),
-      .RST_VAL(0)
+      .RST_VAL(1'b0)
    ) wack_reg (
       .clk_i (clk_i),
       .arst_i(rst_i),
       .cke_i (cke_i),
-      .rst_i (cpu_ack),
-      .en_i  (1'b1),
-      .data_i(iob_wack),
-      .data_o(iob_wack_r)
+      .data_i(iob_wack_nxt),
+      .data_o(iob_wack)
    );
 
+
+   wire cpu_avalid_p;
+   iob_edge_detect
+     #(
+       .CLKEDGE("posedge")
+       )
+       avalid_edge (
+                    .clk_i (clk_i),
+                    .arst_i(rst_i),
+                    .cke_i (cke_i),
+                    .bit_i (cpu_avalid),
+                    .detected_o(cpu_avalid_p)
+                    );
+   
+   
+   
 `ifdef LA_IF
    wire mem_la_read, mem_la_write;
    always @(posedge clk_i) cpu_avalid <= mem_la_read | mem_la_write;
 `else
-   assign cpu_req[`AVALID(0)] = cpu_avalid & ~cpu_ack;
+   assign cpu_req[`AVALID(0)] = cpu_avalid_p;
 `endif
 
 
