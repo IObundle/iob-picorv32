@@ -16,6 +16,7 @@ if __name__ == "__main__":
 from iob_reg import iob_reg
 from iob_edge_detect import iob_edge_detect
 
+
 class iob_picorv32(iob_module):
     @classmethod
     def _init_attributes(cls):
@@ -27,7 +28,7 @@ class iob_picorv32(iob_module):
         cls.submodules = [
             iob_reg,
             iob_edge_detect,
-        ])
+        ]
 
         cls.confs = [
             # Macros
