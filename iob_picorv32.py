@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
 # Submodules
 from iob_reg import iob_reg
-
+from iob_edge_detect import iob_edge_detect
 
 class iob_picorv32(iob_module):
     @classmethod
@@ -26,7 +26,8 @@ class iob_picorv32(iob_module):
         cls.setup_dir = os.path.dirname(__file__)
         cls.submodules = [
             iob_reg,
-        ]
+            iob_edge_detect,
+        ])
 
         cls.confs = [
             # Macros
