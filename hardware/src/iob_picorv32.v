@@ -101,18 +101,15 @@ module iob_picorv32 #(
 
 
    wire cpu_avalid_p;
-   iob_edge_detect
-     #(
-       .CLKEDGE("posedge")
-       )
-       avalid_edge (
-                    .clk_i (clk_i),
-                    .arst_i(rst_i),
-                    .cke_i (cke_i),
-                    .bit_i (cpu_avalid),
-                    .detected_o(cpu_avalid_p)
-                    );
-   
+   iob_edge_detect avalid_edge 
+     (
+      .clk_i (clk_i),
+      .arst_i(rst_i),
+      .cke_i (cke_i),
+      .rst_i (1'b0),
+      .bit_i (cpu_avalid),
+      .detected_o(cpu_avalid_p)
+      );
    
    
 `ifdef LA_IF
