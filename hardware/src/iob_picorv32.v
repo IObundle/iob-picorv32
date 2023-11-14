@@ -107,7 +107,7 @@ module iob_picorv32 #(
       .arst_i(rst_i),
       .cke_i (cke_i),
       .rst_i (1'b0),
-      .bit_i (cpu_avalid),
+      .bit_i (cpu_avalid & ~cpu_ack),
       .detected_o(cpu_avalid_p)
       );
    
