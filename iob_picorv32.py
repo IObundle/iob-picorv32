@@ -11,7 +11,6 @@ from iob_edge_detect import iob_edge_detect
 class iob_picorv32(iob_module):
     name = 'iob_picorv32'
     version = 'V0.10'
-    flows = ''
     setup_dir = os.path.dirname(__file__)
 
     @classmethod
