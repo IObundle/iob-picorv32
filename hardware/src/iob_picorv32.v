@@ -22,9 +22,6 @@
 `include "iob_picorv32_conf.vh"
 `include "iob_utils.vh"
 
-//the look ahead interface is not working because mem_instr is unknown at request
-//`define LA_IF
-
 module iob_picorv32 #(
     `include "iob_picorv32_params.vs"
     ) (
@@ -55,7 +52,9 @@ module iob_picorv32 #(
    wire                 cpu_d_addr_msb;
    wire                 cpu_instr;
    wire                 cpu_avalid;
-   wire                 cpu_avalid_r;
+   wire                 cpu_avalid_int;
+   wire                 cpu_avalid_posedge;
+
    wire                 cpu_we_r;
    wire [`WSTRB_W-1:0]  cpu_wstrb;
    wire                 cpu_ack;
@@ -99,26 +98,22 @@ module iob_picorv32 #(
       .data_o(iob_wack)
    );
 
+   //the CPU avalid signal must be shortened to one clock cycle,
+   // otherwise it can't be used to read and write FIFOs
+   iob_edge_detect #(
+                     .EDGE_TYPE("rising"),
+                     .OUT_TYPE ("pulse")
+   ) mtxswrst_posedge_detect (
+      .clk_i     (clk_i),
+      .cke_i     (cke_i),
+      .arst_i    (arst_i),
+      .rst_i     (1'b0),
+      .bit_i     (cpu_avalid_int),
+      .detected_o(cpu_avalid_posedge)
+   );
 
-   wire cpu_avalid_p;
-   iob_edge_detect avalid_edge 
-     (
-      .clk_i (clk_i),
-      .arst_i(rst_i),
-      .cke_i (cke_i),
-      .rst_i (1'b0),
-      .bit_i (cpu_avalid & ~cpu_ack),
-      .detected_o(cpu_avalid_p)
-      );
-   
-   
-`ifdef LA_IF
-   wire mem_la_read, mem_la_write;
-   always @(posedge clk_i) cpu_avalid <= mem_la_read | mem_la_write;
-`else
-   assign cpu_req[`AVALID(0)] = cpu_avalid_p;
-`endif
-
+   assign cpu_avalid_int = cpu_avalid & iob_ready;
+   assign cpu_req[`AVALID(0)] = cpu_avalid_posedge;
 
    //intantiate picorv32
    picorv32 #(
@@ -132,7 +127,6 @@ module iob_picorv32 #(
                   .resetn        (~rst_i),
                   .trap          (trap_o),
                   .mem_instr     (cpu_instr),
-`ifndef LA_IF
                   //memory interface
                   .mem_valid     (cpu_avalid),
                   .mem_addr      (cpu_req[`ADDRESS(0, ADDR_W)]),
@@ -144,19 +138,6 @@ module iob_picorv32 #(
                   .mem_la_addr   (),
                   .mem_la_wdata  (),
                   .mem_la_wstrb  (),
-`else
-                  //memory interface
-                  .mem_valid     (),
-                  .mem_addr      (),
-                  .mem_wdata     (),
-                  .mem_wstrb     (),
-                  //lookahead interface
-                  .mem_la_read   (mem_la_read),
-                  .mem_la_write  (mem_la_write),
-                  .mem_la_addr   (cpu_req[`ADDRESS(0, ADDR_W)]),
-                  .mem_la_wdata  (cpu_req[`WDATA(0)]),
-                  .mem_la_wstrb  (cpu_wstrb),
-`endif
                   .mem_rdata     (cpu_resp[`RDATA(0)]),
                   .mem_ready     (cpu_ack),
                   //co-processor interface (PCPI)

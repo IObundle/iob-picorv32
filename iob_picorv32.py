@@ -3,8 +3,6 @@
 import os
 
 from iob_module import iob_module
-
-# Submodules
 from iob_reg import iob_reg
 from iob_edge_detect import iob_edge_detect
 
