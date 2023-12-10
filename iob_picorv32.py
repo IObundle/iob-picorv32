@@ -38,7 +38,8 @@ class iob_picorv32(iob_module):
         cls.ios += [
             {'name': 'general', 'descr':'General interface signals', 'ports': [
                 {'name':"clk_i", 'type':"I", 'n_bits':'1', 'descr':"CPU clock input"},
-                {'name':"rst_i", 'type':"I", 'n_bits':'1', 'descr':"CPU reset input"},
+                {'name':"cke_i", 'type':"I", 'n_bits':'1', 'descr':"CPU clock enable input"},
+                {'name':"arst_i", 'type':"I", 'n_bits':'1', 'descr':"CPU reset input"},
                 {'name':"boot_i", 'type':"I", 'n_bits':'1', 'descr':"CPU boot input"},
                 {'name':"trap_o", 'type':"O", 'n_bits':'1', 'descr':"CPU trap output"},
             ]},

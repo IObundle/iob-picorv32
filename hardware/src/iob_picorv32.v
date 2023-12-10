@@ -26,7 +26,7 @@ module iob_picorv32 #(
     `include "iob_picorv32_params.vs"
     ) (
     input               clk_i,
-    input               rst_i,
+    input               arst_i,
     input               cke_i,
     input               boot_i,
     output              trap_o,
@@ -92,7 +92,7 @@ module iob_picorv32 #(
       .RST_VAL(1'b0)
    ) wack_reg (
       .clk_i (clk_i),
-      .arst_i(rst_i),
+      .arst_i(arst_i),
       .cke_i (cke_i),
       .data_i(iob_wack_nxt),
       .data_o(iob_wack)
@@ -124,7 +124,7 @@ module iob_picorv32 #(
               )
    picorv32_core (
                   .clk           (clk_i),
-                  .resetn        (~rst_i),
+                  .resetn        (~arst_i),
                   .trap          (trap_o),
                   .mem_instr     (cpu_instr),
                   //memory interface
