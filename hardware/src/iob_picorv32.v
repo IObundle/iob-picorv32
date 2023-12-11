@@ -71,7 +71,7 @@ module iob_picorv32 #(
    assign cpu_ready = cpu_instr? iob_i_rvalid : iob_d_rvalid|iob_wack;
 
    //compute data read/write ack
-   assign iob_wack_nxt = cpu_valid & (| cpu_wstrb) & iob_ready;
+   assign iob_wack_nxt = cpu_valid & (|cpu_wstrb) & iob_ready;
    iob_reg #(
       .DATA_W (1),
       .RST_VAL(1'b0)
