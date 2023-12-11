@@ -1,23 +1,3 @@
-/*
- *  IObPicoRV32 -- A PicoRV32 Wrapper
- *
- *  Copyright (C) 2020 IObundle <info@iobundle.com>
- *
- *  Permission to use, copy, modify, and/or distribute this software for any
- *  purpose with or without fee is hereby granted, provided that the above
- *  copyright notice and this permission notice appear in all copies.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- *  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- *  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- *  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- */
-
-
 `timescale 1 ns / 1 ps
 `include "iob_picorv32_conf.vh"
 `include "iob_utils.vh"
@@ -40,53 +20,58 @@ module iob_picorv32 #(
     input [`RESP_W-1:0] dbus_resp_i
     );
 
-   localparam integer Vbit = `REQ_W-1;
-   localparam integer AddrMsb = `REQ_W-2;
-
-   //create picorv32 native interface concat buses
-   wire [1*`REQ_W-1:0]  cpu_i_req;
-   wire [1*`REQ_W-1:0]  cpu_d_req;
-   wire [1*`REQ_W-1:0]  cpu_req;
-   wire [1*`RESP_W-1:0] cpu_resp;
-   wire                 cpu_i_addr_msb;
-   wire                 cpu_d_addr_msb;
+   //picorv32 native interface wires
    wire                 cpu_instr;
-   wire                 cpu_avalid;
-   wire                 cpu_avalid_int;
-   wire                 cpu_avalid_posedge;
+   wire                 cpu_valid;
+   wire [ADDR_W-1:0]    cpu_addr;
+   wire [DATA_W/8-1:0]  cpu_wstrb;
+   wire [DATA_W-1:0]    cpu_wdata;
+   wire [DATA_W-1:0]    cpu_rdata;
+   wire                 cpu_ready;
 
-   wire                 cpu_we_r;
-   wire [`WSTRB_W-1:0]  cpu_wstrb;
-   wire                 cpu_ack;
+   //split cpu bus into ibus and dbus
+   wire                 cpu_i_valid;   
+   wire                 cpu_d_valid;
+   wire                 cpu_d_valid_int;
+   wire                 cpu_d_valid_posedge;
+
+   //iob interface wires
+   wire                 iob_i_rvalid;
+   wire                 iob_d_rvalid;
    wire                 iob_rvalid;
    wire                 iob_ready;
    wire                 iob_wack;
    wire                 iob_wack_nxt;
 
-   //modify addresses if DDR used according to boot_i status
+   //compute the instruction bus request
    generate
       if (USE_EXTMEM) begin: g_use_extmem
-         assign cpu_i_addr_msb = ~boot_i;
-         assign cpu_d_addr_msb = cpu_d_req[AddrMsb];
-      end else begin: g_not_use_extmem
-         assign cpu_i_addr_msb = 1'b0;
-         assign cpu_d_addr_msb = 1'b0;
+         assign ibus_req_o = {cpu_i_valid, ~boot_i, cpu_addr[ADDR_W-2:0], 36'd0};
+     end else begin: g_not_use_extmem
+         assign ibus_req_o = {cpu_i_valid, cpu_addr, 36'd0};
       end
    endgenerate
-   assign ibus_req_o = {cpu_i_req[Vbit], cpu_i_addr_msb, cpu_i_req[AddrMsb-1:0]};
-   assign dbus_req_o = {cpu_d_req[Vbit], cpu_d_addr_msb, cpu_d_req[AddrMsb-1:0]};
+
+   //compute the data bus request
+   assign dbus_req_o = {cpu_d_valid_posedge, cpu_addr, cpu_wdata, cpu_wstrb};
 
    //split cpu bus into instruction and data buses
-   assign cpu_i_req = cpu_instr?  cpu_req : {`REQ_W{1'b0}};
-   assign cpu_d_req = !cpu_instr? cpu_req : {`REQ_W{1'b0}};
-   assign cpu_resp  = cpu_instr? ibus_resp_i: dbus_resp_i;
+   assign cpu_i_valid = cpu_instr?  cpu_valid : 1'b0;
+   assign cpu_d_valid = !cpu_instr? cpu_valid : 1'b0;
 
-   assign cpu_req[`WSTRB(0)] = cpu_wstrb;
-   assign iob_rvalid = cpu_resp[`RVALID(0)];
-   assign iob_ready  = cpu_resp[`READY(0)];
-   assign cpu_ack    = (iob_rvalid | iob_wack);
-   assign iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
+   
+   //extract iob interface wires from concatenated buses
+   assign iob_d_rvalid = dbus_resp_i[`RVALID(0)];
+   assign iob_i_rvalid = ibus_resp_i[`RVALID(0)];
+   assign iob_rvalid = iob_d_rvalid | iob_i_rvalid;
+   assign iob_ready  = dbus_resp_i[`READY(0)];
 
+   //cpu rdata and ready
+   assign cpu_rdata = cpu_instr? ibus_resp_i[`RDATA(0)] : dbus_resp_i[`RDATA(0)];
+   assign cpu_ready = cpu_instr? iob_i_rvalid : iob_d_rvalid|iob_wack;
+
+   //compute data read/write ack
+   assign iob_wack_nxt = cpu_valid & (| cpu_wstrb) & iob_ready;
    iob_reg #(
       .DATA_W (1),
       .RST_VAL(1'b0)
@@ -98,8 +83,9 @@ module iob_picorv32 #(
       .data_o(iob_wack)
    );
 
-   //the CPU avalid signal must be shortened to one clock cycle,
-   // otherwise it can't be used to read and write FIFOs
+   //the CPU valid signal must be deasserted after the ready is asserted
+   //otherwise it can't be used to read and write FIFOs
+   assign cpu_d_valid_int = cpu_d_valid & iob_ready;
    iob_edge_detect #(
                      .EDGE_TYPE("rising"),
                      .OUT_TYPE ("pulse")
@@ -108,14 +94,11 @@ module iob_picorv32 #(
       .cke_i     (cke_i),
       .arst_i    (arst_i),
       .rst_i     (1'b0),
-      .bit_i     (cpu_avalid_int),
-      .detected_o(cpu_avalid_posedge)
+      .bit_i     (cpu_d_valid_int),
+      .detected_o(cpu_d_valid_posedge)
    );
 
-   assign cpu_avalid_int = cpu_avalid & iob_ready;
-   assign cpu_req[`AVALID(0)] = cpu_avalid_posedge;
-
-   //intantiate picorv32
+   //intantiate the PicoRV32 CPU
    picorv32 #(
               .COMPRESSED_ISA(USE_COMPRESSED),
               .ENABLE_FAST_MUL(USE_MUL_DIV),
@@ -128,18 +111,18 @@ module iob_picorv32 #(
                   .trap          (trap_o),
                   .mem_instr     (cpu_instr),
                   //memory interface
-                  .mem_valid     (cpu_avalid),
-                  .mem_addr      (cpu_req[`ADDRESS(0, ADDR_W)]),
-                  .mem_wdata     (cpu_req[`WDATA(0)]),
+                  .mem_valid     (cpu_valid),
+                  .mem_addr      (cpu_addr),
+                  .mem_wdata     (cpu_wdata),
                   .mem_wstrb     (cpu_wstrb),
+                  .mem_rdata     (cpu_rdata),
+                  .mem_ready     (cpu_ready),
                   //lookahead interface
                   .mem_la_read   (),
                   .mem_la_write  (),
                   .mem_la_addr   (),
                   .mem_la_wdata  (),
                   .mem_la_wstrb  (),
-                  .mem_rdata     (cpu_resp[`RDATA(0)]),
-                  .mem_ready     (cpu_ack),
                   //co-processor interface (PCPI)
                   .pcpi_valid    (),
                   .pcpi_insn     (),
