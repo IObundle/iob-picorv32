@@ -51,9 +51,9 @@ module iob_picorv32 #(
    wire                 cpu_i_addr_msb;
    wire                 cpu_d_addr_msb;
    wire                 cpu_instr;
-   wire                 cpu_avalid;
-   wire                 cpu_avalid_int;
-   wire                 cpu_avalid_posedge;
+   wire                 cpu_valid;
+   wire                 cpu_valid_int;
+   wire                 cpu_valid_posedge;
 
    wire                 cpu_we_r;
    wire [`WSTRB_W-1:0]  cpu_wstrb;
@@ -85,7 +85,7 @@ module iob_picorv32 #(
    assign iob_rvalid = cpu_resp[`RVALID(0)];
    assign iob_ready  = cpu_resp[`READY(0)];
    assign cpu_ack    = (iob_rvalid | iob_wack);
-   assign iob_wack_nxt = cpu_avalid & (| cpu_wstrb) & iob_ready;
+   assign iob_wack_nxt = cpu_valid & (| cpu_wstrb) & iob_ready;
 
    iob_reg #(
       .DATA_W (1),
@@ -98,7 +98,7 @@ module iob_picorv32 #(
       .data_o(iob_wack)
    );
 
-   //the CPU avalid signal must be shortened to one clock cycle,
+   //the CPU valid signal must be shortened to one clock cycle,
    // otherwise it can't be used to read and write FIFOs
    iob_edge_detect #(
                      .EDGE_TYPE("rising"),
@@ -108,12 +108,12 @@ module iob_picorv32 #(
       .cke_i     (cke_i),
       .arst_i    (arst_i),
       .rst_i     (1'b0),
-      .bit_i     (cpu_avalid_int),
-      .detected_o(cpu_avalid_posedge)
+      .bit_i     (cpu_valid_int),
+      .detected_o(cpu_valid_posedge)
    );
 
-   assign cpu_avalid_int = cpu_avalid & iob_ready;
-   assign cpu_req[`AVALID(0)] = cpu_avalid_posedge;
+   assign cpu_valid_int = cpu_valid & iob_ready;
+   assign cpu_req[`VALID(0)] = cpu_valid_posedge;
 
    //intantiate picorv32
    picorv32 #(
@@ -128,7 +128,7 @@ module iob_picorv32 #(
                   .trap          (trap_o),
                   .mem_instr     (cpu_instr),
                   //memory interface
-                  .mem_valid     (cpu_avalid),
+                  .mem_valid     (cpu_valid),
                   .mem_addr      (cpu_req[`ADDRESS(0, ADDR_W)]),
                   .mem_wdata     (cpu_req[`WDATA(0)]),
                   .mem_wstrb     (cpu_wstrb),
