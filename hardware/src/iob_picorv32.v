@@ -34,6 +34,7 @@ module iob_picorv32 #(
    wire                 cpu_d_valid;
    wire                 cpu_d_valid_int;
    wire                 cpu_d_valid_posedge;
+   wire                 cpu_d_valid_posedge_q;
 
    //iob interface wires
    wire                 iob_i_rvalid;
@@ -53,7 +54,7 @@ module iob_picorv32 #(
    endgenerate
 
    //compute the data bus request
-   assign dbus_req_o = {cpu_d_valid_posedge, cpu_addr, cpu_wdata, cpu_wstrb};
+   assign dbus_req_o = {cpu_d_valid_posedge_q, cpu_addr, cpu_wdata, cpu_wstrb};
 
    //split cpu bus into instruction and data buses
    assign cpu_i_valid = cpu_instr?  cpu_valid : 1'b0;
@@ -96,6 +97,17 @@ module iob_picorv32 #(
       .rst_i     (1'b0),
       .bit_i     (cpu_d_valid_int),
       .detected_o(cpu_d_valid_posedge)
+   );
+
+   iob_reg #(
+       .DATA_W (1),
+       .RST_VAL(1'b0)
+   ) cpu_d_valid_posedge_reg (
+       .clk_i (clk_i),
+       .arst_i(arst_i),
+       .cke_i (cke_i),
+       .data_i(cpu_d_valid_posedge),
+       .data_o(cpu_d_valid_posedge_q)
    );
    
    //intantiate the PicoRV32 CPU
