@@ -85,7 +85,7 @@ module iob_picorv32 #(
 
    //the CPU valid signal must be deasserted after the ready is asserted
    //otherwise it can't be used to read and write FIFOs
-   assign cpu_d_valid_int = cpu_d_valid & iob_ready;
+   assign cpu_d_valid_int = cpu_d_valid & iob_ready & ~(iob_rvalid|iob_wack);
    iob_edge_detect #(
                      .EDGE_TYPE("rising"),
                      .OUT_TYPE ("pulse")
@@ -97,7 +97,7 @@ module iob_picorv32 #(
       .bit_i     (cpu_d_valid_int),
       .detected_o(cpu_d_valid_posedge)
    );
-
+   
    //intantiate the PicoRV32 CPU
    picorv32 #(
               .COMPRESSED_ISA(USE_COMPRESSED),
