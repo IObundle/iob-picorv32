@@ -30,7 +30,7 @@ module iob_picorv32 #(
    wire                 cpu_ready;
 
    //split cpu bus into ibus and dbus
-   wire                 cpu_i_valid;   
+   wire                 cpu_i_valid;
    wire                 cpu_d_valid;
    wire                 cpu_d_valid_int;
    wire                 cpu_d_valid_posedge;
@@ -84,9 +84,8 @@ module iob_picorv32 #(
       .data_o(iob_wack)
    );
 
-   //the CPU valid signal must be deasserted after the ready is asserted
-   //otherwise it can't be used to read and write FIFOs
-   assign cpu_d_valid_int = cpu_d_valid & iob_ready & ~(iob_rvalid|iob_wack);
+   //CPU valid signal: deassert it after receiving response from iob
+   assign cpu_d_valid_int = cpu_d_valid & ~(iob_rvalid|iob_wack);
    iob_edge_detect #(
                      .EDGE_TYPE("rising"),
                      .OUT_TYPE ("pulse")
