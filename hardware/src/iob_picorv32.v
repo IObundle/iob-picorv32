@@ -32,17 +32,12 @@ module iob_picorv32 #(
    //split cpu bus into ibus and dbus
    wire                 cpu_i_valid;
    wire                 cpu_d_valid;
-   wire                 cpu_d_valid_int;
-   wire                 cpu_d_valid_posedge;
-   wire                 cpu_d_valid_posedge_q;
 
    //iob interface wires
    wire                 iob_i_rvalid;
    wire                 iob_d_rvalid;
    wire                 iob_rvalid;
    wire                 iob_ready;
-   wire                 iob_wack;
-   wire                 iob_wack_nxt;
 
    //compute the instruction bus request
    generate
@@ -54,13 +49,12 @@ module iob_picorv32 #(
    endgenerate
 
    //compute the data bus request
-   assign dbus_req_o = {cpu_d_valid_posedge_q, cpu_addr, cpu_wdata, cpu_wstrb};
+   assign dbus_req_o = {cpu_d_valid, cpu_addr, cpu_wdata, cpu_wstrb};
 
    //split cpu bus into instruction and data buses
    assign cpu_i_valid = cpu_instr?  cpu_valid : 1'b0;
    assign cpu_d_valid = !cpu_instr? cpu_valid : 1'b0;
 
-   
    //extract iob interface wires from concatenated buses
    assign iob_d_rvalid = dbus_resp_i[`RVALID(0)];
    assign iob_i_rvalid = ibus_resp_i[`RVALID(0)];
@@ -69,46 +63,8 @@ module iob_picorv32 #(
 
    //cpu rdata and ready
    assign cpu_rdata = cpu_instr? ibus_resp_i[`RDATA(0)] : dbus_resp_i[`RDATA(0)];
-   assign cpu_ready = cpu_instr? iob_i_rvalid : iob_d_rvalid|iob_wack;
+   assign cpu_ready = cpu_instr? iob_i_rvalid : (iob_d_rvalid | ((|cpu_wstrb) & iob_ready));
 
-   //compute data read/write ack
-   assign iob_wack_nxt = cpu_valid & (|cpu_wstrb) & iob_ready;
-   iob_reg #(
-      .DATA_W (1),
-      .RST_VAL(1'b0)
-   ) wack_reg (
-      .clk_i (clk_i),
-      .arst_i(arst_i),
-      .cke_i (cke_i),
-      .data_i(iob_wack_nxt),
-      .data_o(iob_wack)
-   );
-
-   //CPU valid signal: deassert it after receiving response from iob
-   assign cpu_d_valid_int = cpu_d_valid & ~(iob_rvalid|iob_wack);
-   iob_edge_detect #(
-                     .EDGE_TYPE("rising"),
-                     .OUT_TYPE ("pulse")
-   ) mtxswrst_posedge_detect (
-      .clk_i     (clk_i),
-      .cke_i     (cke_i),
-      .arst_i    (arst_i),
-      .rst_i     (1'b0),
-      .bit_i     (cpu_d_valid_int),
-      .detected_o(cpu_d_valid_posedge)
-   );
-
-   iob_reg #(
-       .DATA_W (1),
-       .RST_VAL(1'b0)
-   ) cpu_d_valid_posedge_reg (
-       .clk_i (clk_i),
-       .arst_i(arst_i),
-       .cke_i (cke_i),
-       .data_i(cpu_d_valid_posedge),
-       .data_o(cpu_d_valid_posedge_q)
-   );
-   
    //intantiate the PicoRV32 CPU
    picorv32 #(
               .COMPRESSED_ISA(USE_COMPRESSED),
