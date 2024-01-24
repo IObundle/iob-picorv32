@@ -36,7 +36,6 @@ module iob_picorv32 #(
    //iob interface wires
    wire                iob_i_rvalid;
    wire                iob_d_rvalid;
-   wire                iob_rvalid;
    wire                iob_ready;
 
    //compute the instruction bus request
@@ -58,12 +57,11 @@ module iob_picorv32 #(
    //extract iob interface wires from concatenated buses
    assign iob_d_rvalid = dbus_resp_i[`RVALID(0)];
    assign iob_i_rvalid = ibus_resp_i[`RVALID(0)];
-   assign iob_rvalid   = iob_d_rvalid | iob_i_rvalid;
    assign iob_ready    = dbus_resp_i[`READY(0)];
 
    //cpu rdata and ready
    assign cpu_rdata    = cpu_instr ? ibus_resp_i[`RDATA(0)] : dbus_resp_i[`RDATA(0)];
-   assign cpu_ready    = cpu_instr ? iob_i_rvalid : (iob_d_rvalid | ((|cpu_wstrb) & iob_ready));
+   assign cpu_ready    = cpu_instr ? iob_i_rvalid : |cpu_wstrb? iob_ready : iob_d_rvalid;
 
    //intantiate the PicoRV32 CPU
    picorv32 #(
