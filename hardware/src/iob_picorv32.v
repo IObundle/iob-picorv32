@@ -31,7 +31,7 @@ module iob_picorv32 #(
 
    //split cpu bus into ibus and dbus
    wire                iob_i_valid;
-   reg                 iob_d_valid;
+   wire                 iob_d_valid;
 
    //iob interface wires
    wire                iob_i_rvalid;
