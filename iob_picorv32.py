@@ -35,23 +35,76 @@ class iob_picorv32(iob_module):
 
     @classmethod
     def _setup_ios(cls):
-        cls.ios += [
-            {'name': 'general', 'descr':'General interface signals', 'ports': [
-                {'name':"clk_i", 'type':"I", 'n_bits':'1', 'descr':"CPU clock input"},
-                {'name':"cke_i", 'type':"I", 'n_bits':'1', 'descr':"CPU clock enable input"},
-                {'name':"arst_i", 'type':"I", 'n_bits':'1', 'descr':"CPU reset input"},
-                {'name':"boot_i", 'type':"I", 'n_bits':'1', 'descr':"CPU boot input"},
-                {'name':"trap_o", 'type':"O", 'n_bits':'1', 'descr':"CPU trap output"},
-            ]},
-            {'name': 'instruction_bus', 'descr':'Instruction bus', 'ports': [
-                {'name':"ibus_req_o", 'type':"O", 'n_bits':'`REQ_W', 'descr':"Instruction bus request"},
-                {'name':"ibus_resp_i", 'type':"I", 'n_bits':'`RESP_W', 'descr':"Instruction bus response"},
-            ]},
-            {'name': 'data_bus', 'descr':'Data bus', 'ports': [
-                {'name':"dbus_req_o", 'type':"O", 'n_bits':'`REQ_W', 'descr':"Data bus request"},
-                {'name':"dbus_resp_i", 'type':"I", 'n_bits':'`RESP_W', 'descr':"Data bus response"},
-            ]}
-        ]
+      
+      cls.ios += [
+          {
+              "name": "clk_rst",
+              "type": "slave",
+              "port_prefix": "",
+              "wire_prefix": "",
+              "descr": "Clock and reset",
+              "ports": [],
+          },
+          {
+              'name': 'general',
+              "type": "master",
+              "port_prefix": "",
+              "wire_prefix": "",
+              'descr':'General interface signals',
+              'ports': [
+                  {
+                      'name':"boot",
+                      'direction':"input",
+                      'width':'1',
+                      'descr':"CPU boot input"
+                  },
+                  {
+                      'name':"trap",
+                      'direction':"output",
+                      'width':'1',
+                      'descr':"CPU trap output"
+                  },
+              ]},
+          {
+              'name': 'instruction_bus',
+              "type": "master",
+              "port_prefix": "",
+              "wire_prefix": "",
+              'descr':'Instruction bus',
+              'ports': [
+                  {
+                      'name':"ibus_req",
+                      'direction':"output",
+                      'width':'`REQ_W',
+                      'descr':"Instruction bus request"},
+                  {
+                      'name':"ibus_resp",
+                      'direction':"input",
+                      'width':'`RESP_W',
+                      'descr':"Instruction bus response"
+                  },
+              ]},
+          {
+              'name': 'data_bus',
+              "type": "master",
+              "port_prefix": "",
+              "wire_prefix": "",
+              'descr':'Data bus',
+              'ports': [
+                  {
+                      'name':"dbus_req",
+                      'direction':"output",
+                      'width':'`REQ_W',
+                      'descr':"Data bus request"
+                  },
+                  {
+                      'name':"dbus_resp",
+                      'direction':"input",
+                      'width':'`RESP_W',
+                      'descr':"Data bus response"
+                  },
+              ]}
+      ]
 
     @classmethod
     def _setup_block_groups(cls):
