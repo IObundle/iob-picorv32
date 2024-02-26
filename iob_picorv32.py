@@ -13,8 +13,8 @@ class iob_picorv32(iob_module):
         self.version = 'V0.10'
         self.setup_dir = os.path.dirname(__file__)
         self.submodule_list = [
-            iob_reg,
-            iob_edge_detect,
+            iob_reg(),
+            iob_edge_detect(),
         ]
         self.confs = [
             # Macros
