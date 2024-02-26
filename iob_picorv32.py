@@ -26,7 +26,7 @@ class iob_picorv32(iob_module):
             {'name':'USE_MUL_DIV', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
             {'name':'USE_EXTMEM', 'type':'P', 'val':'0', 'min':'0', 'max':'1', 'descr':'Select if configured for usage with external memory.'},
         ]
-        self.ios += [
+        self.ios = [
             {
                 "name": "clk_rst",
                 "type": "slave",
@@ -95,4 +95,4 @@ class iob_picorv32(iob_module):
                     },
                 ]}
         ]
-        self.block_groups += []
+        self.block_groups = []
