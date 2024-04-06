@@ -12,12 +12,10 @@ module iob_picorv32 #(
    output trap_o,
 
    // instruction bus
-   output [ `REQ_W-1:0] ibus_req_o,
-   input  [`RESP_W-1:0] ibus_resp_i,
+   `include "iob_picorv32_ibus_iob_m_port.vs"
 
    // data bus
-   output [ `REQ_W-1:0] dbus_req_o,
-   input  [`RESP_W-1:0] dbus_resp_i
+   `include "iob_picorv32_dbus_iob_m_port.vs"
 );
 
    //picorv32 native interface wires
@@ -39,16 +37,22 @@ module iob_picorv32 #(
    wire                iob_d_ready;
 
    //compute the instruction bus request
+   assign ibus_iob_valid_o = iob_i_valid;
    generate
       if (USE_EXTMEM) begin : g_use_extmem
-         assign ibus_req_o = {iob_i_valid, ~boot_i, cpu_addr[ADDR_W-2:0], 36'd0};
+         assign ibus_iob_addr_o = {~boot_i, cpu_addr[ADDR_W-2:0]};
       end else begin : g_not_use_extmem
-         assign ibus_req_o = {iob_i_valid, cpu_addr, 36'd0};
+         assign ibus_iob_addr_o = cpu_addr;
       end
    endgenerate
+   assign ibus_iob_wdata_o = {DATA_W{1'b0}};
+   assign ibus_iob_wstrb_o = {(DATA_W/8){1'b0}};
 
    //compute the data bus request
-   assign dbus_req_o   = {iob_d_valid, cpu_addr, cpu_wdata, cpu_wstrb};
+   assign dbus_iob_valid_o = iob_d_valid;
+   assign dbus_iob_addr_o = cpu_addr;
+   assign dbus_iob_wdata_o = cpu_wdata;
+   assign dbus_iob_wstrb_o = cpu_wstrb;
 
    //split cpu bus into instruction and data buses
    assign iob_i_valid  = cpu_instr & cpu_valid;
@@ -56,12 +60,12 @@ module iob_picorv32 #(
    assign iob_d_valid  = (~cpu_instr) & cpu_valid & (~iob_d_rvalid);
 
    //extract iob interface wires from concatenated buses
-   assign iob_d_rvalid = dbus_resp_i[`RVALID(0)];
-   assign iob_i_rvalid = ibus_resp_i[`RVALID(0)];
-   assign iob_d_ready    = dbus_resp_i[`READY(0)];
+   assign iob_d_rvalid = dbus_iob_rvalid_i;
+   assign iob_i_rvalid = ibus_iob_rvalid_i;
+   assign iob_d_ready  = dbus_iob_ready_i;
 
    //cpu rdata and ready
-   assign cpu_rdata    = cpu_instr ? ibus_resp_i[`RDATA(0)] : dbus_resp_i[`RDATA(0)];
+   assign cpu_rdata    = cpu_instr ? ibus_iob_rdata_i : dbus_iob_rdata_i;
    assign cpu_ready    = cpu_instr ? iob_i_rvalid : |cpu_wstrb? iob_d_ready : iob_d_rvalid;
 
    //intantiate the PicoRV32 CPU
