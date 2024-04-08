@@ -1,111 +1,120 @@
 #!/usr/bin/env python3
 
-import os
+from iob_core import iob_core
 
-from iob_module import iob_module
-from iob_reg import iob_reg
-from iob_edge_detect import iob_edge_detect
 
-class iob_picorv32(iob_module):
-    name = 'iob_picorv32'
-    version = 'V0.10'
-    setup_dir = os.path.dirname(__file__)
+class iob_picorv32(iob_core):
+    def __init__(self, *args, **kwargs):
+        self.set_default_attribute("version", "0.1")
+        self.set_default_attribute("generate_hw", False)
 
-    @classmethod
-    def _create_submodules_list(cls):
-        ''' Create submodules list with dependencies of this module
-        '''
-        super()._create_submodules_list([
-            iob_reg,
-            iob_edge_detect,
-        ])
+        self.create_conf(
+            name="ADDR_W",
+            type="P",
+            val="32",
+            min="1",
+            max="?",
+            descr="description here",
+        )
+        self.create_conf(
+            name="DATA_W",
+            type="P",
+            val="32",
+            min="1",
+            max="?",
+            descr="description here",
+        )
+        self.create_conf(
+            name="USE_COMPRESSED",
+            type="P",
+            val="1",
+            min="0",
+            max="1",
+            descr="description here",
+        )
+        self.create_conf(
+            name="USE_MUL_DIV",
+            type="P",
+            val="1",
+            min="0",
+            max="1",
+            descr="description here",
+        )
+        self.create_conf(
+            name="USE_EXTMEM",
+            type="P",
+            val="0",
+            min="0",
+            max="1",
+            descr="Select if configured for usage with external memory.",
+        )
 
-    @classmethod
-    def _setup_confs(cls):
-        super()._setup_confs([
-                # Macros
+        self.create_port(
+            name="clk_rst",
+            type="slave",
+            port_prefix="",
+            wire_prefix="",
+            descr="Clock and reset",
+            signals=[],
+        ),
+        self.create_port(
+            name="general",
+            type="master",
+            port_prefix="",
+            wire_prefix="",
+            descr="General interface signals",
+            signals=[
+                {
+                    "name": "boot",
+                    "direction": "input",
+                    "width": "1",
+                    "descr": "CPU boot input",
+                },
+                {
+                    "name": "trap",
+                    "direction": "output",
+                    "width": "1",
+                    "descr": "CPU trap output",
+                },
+            ],
+        ),
+        self.create_port(
+            name="iob",
+            type="master",
+            file_prefix="iob_picorv32_ibus_",
+            port_prefix="ibus_",
+            wire_prefix="ibus_",
+            param_prefix="",
+            descr="iob-picorv32 instruction bus",
+            signals=[],
+            widths={
+                "DATA_W": "DATA_W",
+                "ADDR_W": "ADDR_W",
+            },
+        ),
+        self.create_port(
+            name="iob",
+            type="master",
+            file_prefix="iob_picorv32_dbus_",
+            port_prefix="dbus_",
+            wire_prefix="dbus_",
+            param_prefix="",
+            descr="iob-picorv32 data bus",
+            signals=[],
+            widths={
+                "DATA_W": "DATA_W",
+                "ADDR_W": "ADDR_W",
+            },
+        )
 
-                # Parameters
-                {'name':'ADDR_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
-                {'name':'DATA_W', 'type':'P', 'val':'32', 'min':'1', 'max':'?', 'descr':'description here'},
-                {'name':'USE_COMPRESSED', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
-                {'name':'USE_MUL_DIV', 'type':'P', 'val':'1', 'min':'0', 'max':'1', 'descr':'description here'},
-                {'name':'USE_EXTMEM', 'type':'P', 'val':'0', 'min':'0', 'max':'1', 'descr':'Select if configured for usage with external memory.'},
-            ])
+        self.create_instance(
+            "iob_reg",
+            "iob_reg_inst",
+        )
 
-    @classmethod
-    def _setup_ios(cls):
-      
-      cls.ios += [
-          {
-              "name": "clk_rst",
-              "type": "slave",
-              "port_prefix": "",
-              "wire_prefix": "",
-              "descr": "Clock and reset",
-              "ports": [],
-          },
-          {
-              'name': 'general',
-              "type": "master",
-              "port_prefix": "",
-              "wire_prefix": "",
-              'descr':'General interface signals',
-              'ports': [
-                  {
-                      'name':"boot",
-                      'direction':"input",
-                      'width':'1',
-                      'descr':"CPU boot input"
-                  },
-                  {
-                      'name':"trap",
-                      'direction':"output",
-                      'width':'1',
-                      'descr':"CPU trap output"
-                  },
-              ]},
-          {
-              'name': 'instruction_bus',
-              "type": "master",
-              "port_prefix": "",
-              "wire_prefix": "",
-              'descr':'Instruction bus',
-              'ports': [
-                  {
-                      'name':"ibus_req",
-                      'direction':"output",
-                      'width':'`REQ_W',
-                      'descr':"Instruction bus request"},
-                  {
-                      'name':"ibus_resp",
-                      'direction':"input",
-                      'width':'`RESP_W',
-                      'descr':"Instruction bus response"
-                  },
-              ]},
-          {
-              'name': 'data_bus',
-              "type": "master",
-              "port_prefix": "",
-              "wire_prefix": "",
-              'descr':'Data bus',
-              'ports': [
-                  {
-                      'name':"dbus_req",
-                      'direction':"output",
-                      'width':'`REQ_W',
-                      'descr':"Data bus request"
-                  },
-                  {
-                      'name':"dbus_resp",
-                      'direction':"input",
-                      'width':'`RESP_W',
-                      'descr':"Data bus response"
-                  },
-              ]}
-      ]
+        self.create_instance(
+            "iob_edge_detect",
+            "iob_edge_detect_inst",
+        )
 
-    @classmethod
-    def _setup_block_groups(cls):
-        cls.block_groups += []
+        super().__init__(*args, **kwargs)
