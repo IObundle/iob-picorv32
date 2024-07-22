@@ -74,7 +74,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "iob",
+                "name": "i_bus",
                 "interface": {
                     "type": "iob",
                     "subtype": "master",
@@ -87,7 +87,7 @@ def setup(py_params_dict):
                 "descr": "iob-picorv32 instruction bus",
             },
             {
-                "name": "iob",
+                "name": "d_bus",
                 "interface": {
                     "type": "iob",
                     "subtype": "master",
