@@ -48,18 +48,15 @@ def setup(py_params_dict):
         ],
         "ports": [
             {
-                "name": "clk_rst",
-                "type": "slave",
-                "port_prefix": "",
-                "wire_prefix": "",
+                "name": "clk_en_rst",
+                "interface": {
+                    "type": "clk_en_rst",
+                    "subtype": "slave",
+                },
                 "descr": "Clock and reset",
-                "signals": [],
             },
             {
                 "name": "general",
-                "type": "master",
-                "port_prefix": "",
-                "wire_prefix": "",
                 "descr": "General interface signals",
                 "signals": [
                     {
@@ -77,32 +74,30 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "iob",
-                "type": "master",
-                "file_prefix": "iob_picorv32_ibus_",
-                "port_prefix": "ibus_",
-                "wire_prefix": "ibus_",
-                "param_prefix": "",
-                "descr": "iob-picorv32 instruction bus",
-                "signals": [],
-                "widths": {
+                "name": "i_bus",
+                "interface": {
+                    "type": "iob",
+                    "subtype": "master",
+                    "file_prefix": "iob_picorv32_ibus_",
+                    "port_prefix": "ibus_",
+                    "wire_prefix": "ibus_",
                     "DATA_W": "DATA_W",
                     "ADDR_W": "ADDR_W",
                 },
+                "descr": "iob-picorv32 instruction bus",
             },
             {
-                "name": "iob",
-                "type": "master",
-                "file_prefix": "iob_picorv32_dbus_",
-                "port_prefix": "dbus_",
-                "wire_prefix": "dbus_",
-                "param_prefix": "",
-                "descr": "iob-picorv32 data bus",
-                "signals": [],
-                "widths": {
+                "name": "d_bus",
+                "interface": {
+                    "type": "iob",
+                    "subtype": "master",
+                    "file_prefix": "iob_picorv32_dbus_",
+                    "port_prefix": "dbus_",
+                    "wire_prefix": "dbus_",
                     "DATA_W": "DATA_W",
                     "ADDR_W": "ADDR_W",
                 },
+                "descr": "iob-picorv32 data bus",
             },
         ],
         "blocks": [
