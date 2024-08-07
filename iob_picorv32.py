@@ -49,11 +49,27 @@ def setup(py_params_dict):
         "ports": [
             {
                 "name": "clk_en_rst",
-                "interface": {
-                    "type": "clk_en_rst",
-                    "subtype": "slave",
-                },
-                "descr": "Clock and reset",
+                "signals": [
+                    {
+                        "name": "clk",
+                        "direction": "input",
+                        "width": "1",
+                        "descr": "Clock input",
+                    },
+                    {
+                        "name": "cke",
+                        "direction": "input",
+                        "width": "1",
+                        "descr": "Clock enable input",
+                    },
+                    {
+                        "name": "rst",
+                        "direction": "input",
+                        "width": "1",
+                        "descr": "Synchronous reset input",
+                    },
+                ],
+                "descr": "Clock, enable and synchronous reset",
             },
             {
                 "name": "general",
