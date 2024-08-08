@@ -4,17 +4,7 @@
 module iob_picorv32 #(
     `include "iob_picorv32_params.vs"
 ) (
-    input  clk_i,
-    input  arst_i,
-    input  cke_i,
-    input  boot_i,
-    output trap_o,
-
-    // instruction bus
-    `include "iob_picorv32_ibus_iob_m_port.vs"
-
-    // data bus
-    `include "iob_picorv32_dbus_iob_m_port.vs"
+    `include "iob_picorv32_io.vs"
 );
 
   //picorv32 native interface wires
@@ -75,7 +65,7 @@ module iob_picorv32 #(
       .BARREL_SHIFTER (1)
   ) picorv32_core (
       .clk         (clk_i),
-      .resetn      (~arst_i),
+      .resetn      (~rst_i),
       .trap        (trap_o),
       .mem_instr   (cpu_instr),
       //memory interface
