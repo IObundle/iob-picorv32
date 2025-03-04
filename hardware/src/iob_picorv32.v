@@ -28,6 +28,8 @@ module iob_picorv32 #(
    wire [  DATA_W-1:0] cpu_wdata;
    wire [  DATA_W-1:0] cpu_rdata;
    wire                cpu_ready;
+   wire                cpu_rready;
+   assign              cpu_rready = 1'b1;
 
    //split cpu bus into ibus and dbus
    wire                iob_i_valid;
@@ -41,14 +43,14 @@ module iob_picorv32 #(
    //compute the instruction bus request
    generate
       if (USE_EXTMEM) begin : g_use_extmem
-         assign ibus_req_o = {iob_i_valid, ~boot_i, cpu_addr[ADDR_W-2:0], 36'd0};
+         assign ibus_req_o = {cpu_rready, iob_i_valid, ~boot_i, cpu_addr[ADDR_W-2:0], 36'd0};
       end else begin : g_not_use_extmem
-         assign ibus_req_o = {iob_i_valid, cpu_addr, 36'd0};
+         assign ibus_req_o = {cpu_rready, iob_i_valid, cpu_addr, 36'd0};
       end
    endgenerate
 
    //compute the data bus request
-   assign dbus_req_o   = {iob_d_valid, cpu_addr, cpu_wdata, cpu_wstrb};
+   assign dbus_req_o   = {cpu_rready, iob_d_valid, cpu_addr, cpu_wdata, cpu_wstrb};
 
    //split cpu bus into instruction and data buses
    assign iob_i_valid  = cpu_instr & cpu_valid;
