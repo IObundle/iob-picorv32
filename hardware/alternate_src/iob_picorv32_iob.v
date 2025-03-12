@@ -1,23 +1,14 @@
+// SPDX-FileCopyrightText: 2025 IObundle
+//
+// SPDX-License-Identifier: MIT
+
 `timescale 1 ns / 1 ps
 `include "iob_picorv32_conf.vh"
-`include "iob_utils.vh"
 
 module iob_picorv32 #(
    `include "iob_picorv32_params.vs"
 ) (
-   input  clk_i,
-   input  arst_i,
-   input  cke_i,
-   input  boot_i,
-   output trap_o,
-
-   // instruction bus
-   output [ `REQ_W-1:0] ibus_req_o,
-   input  [`RESP_W-1:0] ibus_resp_i,
-
-   // data bus
-   output [ `REQ_W-1:0] dbus_req_o,
-   input  [`RESP_W-1:0] dbus_resp_i
+   `include "iob_picorv32_io.vs"
 );
 
    //picorv32 native interface wires
@@ -28,12 +19,10 @@ module iob_picorv32 #(
    wire [  DATA_W-1:0] cpu_wdata;
    wire [  DATA_W-1:0] cpu_rdata;
    wire                cpu_ready;
-   wire                cpu_rready;
-   assign              cpu_rready = 1'b1;
 
    //split cpu bus into ibus and dbus
    wire                iob_i_valid;
-   wire                 iob_d_valid;
+   wire                iob_d_valid;
 
    //iob interface wires
    wire                iob_i_rvalid;
@@ -41,30 +30,34 @@ module iob_picorv32 #(
    wire                iob_d_ready;
 
    //compute the instruction bus request
-   generate
-      if (USE_EXTMEM) begin : g_use_extmem
-         assign ibus_req_o = {cpu_rready, iob_i_valid, ~boot_i, cpu_addr[ADDR_W-2:0], 36'd0};
-      end else begin : g_not_use_extmem
-         assign ibus_req_o = {cpu_rready, iob_i_valid, cpu_addr, 36'd0};
-      end
-   endgenerate
+   assign ibus_iob_valid_o  = iob_i_valid;
+   assign ibus_iob_addr_o   = cpu_addr;
+   assign ibus_iob_wdata_o  = {DATA_W{1'b0}};
+   assign ibus_iob_wstrb_o  = {(DATA_W / 8) {1'b0}};
+   assign ibus_iob_rready_o = 1'b1;
 
    //compute the data bus request
-   assign dbus_req_o   = {cpu_rready, iob_d_valid, cpu_addr, cpu_wdata, cpu_wstrb};
+   assign dbus_iob_valid_o  = iob_d_valid;
+   assign dbus_iob_addr_o   = cpu_addr;
+   assign dbus_iob_wdata_o  = cpu_wdata;
+   assign dbus_iob_wstrb_o  = cpu_wstrb;
+   assign dbus_iob_rready_o = 1'b1;
 
    //split cpu bus into instruction and data buses
-   assign iob_i_valid  = cpu_instr & cpu_valid;
+   // FIXME: This cpu_valid does not comply with the IOb bus specification: https://github.com/IObundle/iob-soc/blob/d59934bd7ec9ba98aa5f93007c64f99d42071314/submodules/LIB/hardware/modules/iob_interface/README.md
+   // A fix is available in the `iob_picorv32.v` source (also contains AXI interface)
+   assign iob_i_valid       = cpu_instr & cpu_valid;
 
-   assign iob_d_valid  = (~cpu_instr) & cpu_valid & (~iob_d_rvalid);
+   assign iob_d_valid       = (~cpu_instr) & cpu_valid & (~iob_d_rvalid);
 
    //extract iob interface wires from concatenated buses
-   assign iob_d_rvalid = dbus_resp_i[`RVALID(0)];
-   assign iob_i_rvalid = ibus_resp_i[`RVALID(0)];
-   assign iob_d_ready    = dbus_resp_i[`READY(0)];
+   assign iob_d_rvalid      = dbus_iob_rvalid_i;
+   assign iob_i_rvalid      = ibus_iob_rvalid_i;
+   assign iob_d_ready       = dbus_iob_ready_i;
 
    //cpu rdata and ready
-   assign cpu_rdata    = cpu_instr ? ibus_resp_i[`RDATA(0)] : dbus_resp_i[`RDATA(0)];
-   assign cpu_ready    = cpu_instr ? iob_i_rvalid : |cpu_wstrb? iob_d_ready : iob_d_rvalid;
+   assign cpu_rdata         = cpu_instr ? ibus_iob_rdata_i : dbus_iob_rdata_i;
+   assign cpu_ready         = cpu_instr ? iob_i_rvalid : |cpu_wstrb ? iob_d_ready : iob_d_rvalid;
 
    //intantiate the PicoRV32 CPU
    picorv32 #(
@@ -74,7 +67,7 @@ module iob_picorv32 #(
       .BARREL_SHIFTER (1)
    ) picorv32_core (
       .clk         (clk_i),
-      .resetn      (~arst_i),
+      .resetn      (~rst_i),
       .trap        (trap_o),
       .mem_instr   (cpu_instr),
       //memory interface
