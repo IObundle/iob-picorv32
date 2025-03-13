@@ -373,9 +373,9 @@ module picorv32 #(
    wire        mem_xfer;
    reg mem_la_secondword, mem_la_firstword_reg, last_mem_valid;
    wire       mem_la_firstword;
-   assign       mem_la_firstword = COMPRESSED_ISA && (mem_do_prefetch || mem_do_rinst) && next_pc&& !mem_la_secondword;
+   assign     mem_la_firstword = COMPRESSED_ISA && (mem_do_prefetch || mem_do_rinst) && next_pc[1] && !mem_la_secondword;
    wire       mem_la_firstword_xfer;
-   assign       mem_la_firstword_xfer = COMPRESSED_ISA && mem_xfer && (!last_mem_valid ? mem_la_firstword : mem_la_firstword_reg);
+   assign     mem_la_firstword_xfer = COMPRESSED_ISA && mem_xfer && (!last_mem_valid ? mem_la_firstword : mem_la_firstword_reg);
 
    reg prefetched_high_word;
    reg clear_prefetched_high_word;
