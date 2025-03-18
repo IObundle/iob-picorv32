@@ -2485,7 +2485,7 @@ module picorv32_axi #(
    resetn,
    output trap,
 
-   // AXI4-lite master memory interface
+   // AXI4-lite manager memory interface
 
    output        mem_axi_awvalid,
    input         mem_axi_awready,
@@ -2673,7 +2673,7 @@ module picorv32_axi_adapter (
    input clk,
    resetn,
 
-   // AXI4-lite master memory interface
+   // AXI4-lite manager memory interface
 
    output        mem_axi_awvalid,
    input         mem_axi_awready,
