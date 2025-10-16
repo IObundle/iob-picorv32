@@ -13,6 +13,7 @@ def setup(py_params_dict):
         "reset_addr": 0x00000000,
         "uncached_start_addr": 0x00000000,
         "uncached_size": 2**32,
+        "include_cache": True,
     }
 
     # Update params with values from py_params_dict
@@ -178,28 +179,6 @@ def setup(py_params_dict):
                 },
                 "descr": "iob-picorv32 data bus",
             },
-            {
-                "name": "i_bus_axil",
-                "signals": {
-                    "type": "axil",
-                    "file_prefix": "iob_picorv32_ibus_axil_",
-                    "prefix": "ibus_axil_",
-                    "DATA_W": "AXI_DATA_W",
-                    "ADDR_W": "AXI_ADDR_W",
-                },
-                "descr": "iob-picorv32 instruction bus",
-            },
-            {
-                "name": "d_bus_axil",
-                "signals": {
-                    "type": "axil",
-                    "file_prefix": "iob_picorv32_dbus_axil_",
-                    "prefix": "dbus_axil_",
-                    "DATA_W": "AXI_DATA_W",
-                    "ADDR_W": "AXI_ADDR_W",
-                },
-                "descr": "iob-picorv32 data bus",
-            },
             # Ready_received register wires
             {
                 "name": "ready_received_reg_en_rst",
@@ -261,40 +240,41 @@ def setup(py_params_dict):
             #         "clk_en_rst_s": "clk_en_rst_s",
             #         "i_bus_s": "i_bus",
             #         "d_bus_s": "d_bus",
-            #         "i_bus_axi_m": "i_bus_m",
-            #         "d_bus_axi_m": "d_bus_m",
+            #         "axi_m": "d_bus_m",
             #     },
             # },
             {
-                "core_name": "iob_iob2axil",
-                "instance_name": "ibus_iob2axil",
-                "instance_description": "Convert IOb instruction bus to AXI Lite",
+                "core_name": "iob_iob2axi",
+                "instance_name": "ibus_iob2axi",
+                "instance_description": "Convert IOb instruction bus to AXI",
                 "parameters": {
-                    "ADDR_W": "AXI_ADDR_W",
-                    "DATA_W": "AXI_DATA_W",
-                    "AXIL_ADDR_W": "AXI_ADDR_W",
-                    "AXIL_DATA_W": "AXI_DATA_W",
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_LOCK_W": 1,
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "iob_s": "i_bus",
-                    "axil_m": "i_bus_axil",
+                    "axi_m": "i_bus_m",
                 },
             },
             {
-                "core_name": "iob_iob2axil",
-                "instance_name": "dbus_iob2axil",
-                "instance_description": "Convert IOb data bus to AXI Lite",
+                "core_name": "iob_iob2axi",
+                "instance_name": "dbus_iob2axi",
+                "instance_description": "Convert IOb data bus to AXI",
                 "parameters": {
-                    "ADDR_W": "AXI_ADDR_W",
-                    "DATA_W": "AXI_DATA_W",
-                    "AXIL_ADDR_W": "AXI_ADDR_W",
-                    "AXIL_DATA_W": "AXI_DATA_W",
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_LOCK_W": 1,
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "iob_s": "d_bus",
-                    "axil_m": "d_bus_axil",
+                    "axi_m": "d_bus_m",
                 },
             },
             {
@@ -452,80 +432,6 @@ assign plic_iob_ready_o = 1'b0;
 //plic_iob_addr_i,
 //plic_iob_wdata_i,
 //plic_iob_wstrb_i,
-
-// Connect AXI-Lite to AXI
-
-assign ibus_axi_araddr_o = ibus_axil_axil_araddr;
-assign ibus_axi_arvalid_o = ibus_axil_axil_arvalid;
-assign ibus_axil_axil_arready = ibus_axi_arready_i;
-assign ibus_axil_axil_rdata = ibus_axi_rdata_i;
-assign ibus_axil_axil_rresp = ibus_axi_rresp_i;
-assign ibus_axil_axil_rvalid = ibus_axi_rvalid_i;
-assign ibus_axi_rready_o = ibus_axil_axil_rready;
-assign ibus_axi_arid_o = {{AXI_ID_W{{1'b0}}}};
-assign ibus_axi_arlen_o = {{AXI_LEN_W{{1'b0}}}};
-assign ibus_axi_arsize_o = 3'd2;
-assign ibus_axi_arburst_o = 2'b0;
-assign ibus_axi_arlock_o = 1'b0;
-assign ibus_axi_arcache_o = 4'b0;
-assign ibus_axi_arqos_o = 4'b0;
-// assign ... = ibus_axi_rid_i,
-// assign ... = ibus_axi_rlast_i,
-assign ibus_axi_awaddr_o = ibus_axil_axil_awaddr;
-assign ibus_axi_awvalid_o = ibus_axil_axil_awvalid;
-assign ibus_axil_axil_awready = ibus_axi_awready_i;
-assign ibus_axi_wdata_o = ibus_axil_axil_wdata;
-assign ibus_axi_wstrb_o = ibus_axil_axil_wstrb;
-assign ibus_axi_wvalid_o = ibus_axil_axil_wvalid;
-assign ibus_axil_axil_wready = ibus_axi_wready_i;
-assign ibus_axil_axil_bresp = ibus_axi_bresp_i;
-assign ibus_axil_axil_bvalid = ibus_axi_bvalid_i;
-assign ibus_axi_bready_o = ibus_axil_axil_bready;
-assign ibus_axi_awid_o = {{AXI_ID_W{{1'b0}}}};
-assign ibus_axi_awlen_o = {{AXI_LEN_W{{1'b0}}}};
-assign ibus_axi_awsize_o = 3'd2;
-assign ibus_axi_awburst_o = 2'b0;
-assign ibus_axi_awlock_o = 1'b0;
-assign ibus_axi_awcache_o = 4'b0;
-assign ibus_axi_awqos_o = 4'b0;
-assign ibus_axi_wlast_o = 1'b1;
-// assign ... = ibus_axi_bid_i,
-
-assign dbus_axi_araddr_o = dbus_axil_axil_araddr;
-assign dbus_axi_arvalid_o = dbus_axil_axil_arvalid;
-assign dbus_axil_axil_arready = dbus_axi_arready_i;
-assign dbus_axil_axil_rdata = dbus_axi_rdata_i;
-assign dbus_axil_axil_rresp = dbus_axi_rresp_i;
-assign dbus_axil_axil_rvalid = dbus_axi_rvalid_i;
-assign dbus_axi_rready_o = dbus_axil_axil_rready;
-assign dbus_axi_arid_o = {{AXI_ID_W{{1'b0}}}};
-assign dbus_axi_arlen_o = {{AXI_LEN_W{{1'b0}}}};
-assign dbus_axi_arsize_o = 3'd2;
-assign dbus_axi_arburst_o = 2'b0;
-assign dbus_axi_arlock_o = 1'b0;
-assign dbus_axi_arcache_o = 4'b0;
-assign dbus_axi_arqos_o = 4'b0;
-// assign ... = dbus_axi_rid_i,
-// assign ... = dbus_axi_rlast_i,
-assign dbus_axi_awaddr_o = dbus_axil_axil_awaddr;
-assign dbus_axi_awvalid_o = dbus_axil_axil_awvalid;
-assign dbus_axil_axil_awready = dbus_axi_awready_i;
-assign dbus_axi_wdata_o = dbus_axil_axil_wdata;
-assign dbus_axi_wstrb_o = dbus_axil_axil_wstrb;
-assign dbus_axi_wvalid_o = dbus_axil_axil_wvalid;
-assign dbus_axil_axil_wready = dbus_axi_wready_i;
-assign dbus_axil_axil_bresp = dbus_axi_bresp_i;
-assign dbus_axil_axil_bvalid = dbus_axi_bvalid_i;
-assign dbus_axi_bready_o = dbus_axil_axil_bready;
-assign dbus_axi_awid_o = {{AXI_ID_W{{1'b0}}}};
-assign dbus_axi_awlen_o = {{AXI_LEN_W{{1'b0}}}};
-assign dbus_axi_awsize_o = 3'd2;
-assign dbus_axi_awburst_o = 2'b0;
-assign dbus_axi_awlock_o = 1'b0;
-assign dbus_axi_awcache_o = 4'b0;
-assign dbus_axi_awqos_o = 4'b0;
-assign dbus_axi_wlast_o = 1'b1;
-// assign ... = dbus_axi_bid_i,
 
 """
             }
