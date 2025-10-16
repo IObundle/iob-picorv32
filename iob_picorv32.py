@@ -83,11 +83,7 @@ def setup(py_params_dict):
                 "name": "rst_i",
                 "descr": "Synchronous reset",
                 "signals": [
-                    {
-                        "name": "rst_i",
-                        "descr": "CPU synchronous reset",
-                        "width": "1",
-                    },
+                    {"name": "rst_i", "descr": "CPU synchronous reset", "width": 1},
                 ],
             },
             {
@@ -97,7 +93,7 @@ def setup(py_params_dict):
                     "type": "axi",
                     "prefix": "ibus_",
                     "ID_W": "AXI_ID_W",
-                    "ADDR_W": "AXI_ADDR_W - 2",
+                    "ADDR_W": "AXI_ADDR_W",
                     "DATA_W": "AXI_DATA_W",
                     "LEN_W": "AXI_LEN_W",
                     "LOCK_W": 1,
@@ -110,7 +106,7 @@ def setup(py_params_dict):
                     "type": "axi",
                     "prefix": "dbus_",
                     "ID_W": "AXI_ID_W",
-                    "ADDR_W": "AXI_ADDR_W - 2",
+                    "ADDR_W": "AXI_ADDR_W",
                     "DATA_W": "AXI_DATA_W",
                     "LEN_W": "AXI_LEN_W",
                     "LOCK_W": 1,
@@ -122,7 +118,7 @@ def setup(py_params_dict):
                 "signals": {
                     "type": "iob",
                     "prefix": "clint_",
-                    "ADDR_W": 16 - 2,
+                    "ADDR_W": 16,
                 },
             },
             {
@@ -131,7 +127,7 @@ def setup(py_params_dict):
                 "signals": {
                     "type": "iob",
                     "prefix": "plic_",
-                    "ADDR_W": 22 - 2,
+                    "ADDR_W": 22,
                 },
             },
             {
@@ -141,7 +137,7 @@ def setup(py_params_dict):
                     {
                         "name": "plic_interrupts_i",
                         "descr": "PLIC interrupts",
-                        "width": "32",
+                        "width": 32,
                     },
                 ],
             },
@@ -302,29 +298,44 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_reg_re",
+                "core_name": "iob_reg",
                 "instance_name": "ready_received_re",
+                "port_params": {
+                    "clk_en_rst_s": "c_a_r_e",
+                },
                 "parameters": {
                     "DATA_W": 1,
                     "RST_VAL": "1'b0",
                 },
                 "connect": {
-                    "clk_en_rst_s": "clk_en_rst_s",
-                    "en_rst_i": "ready_received_reg_en_rst",
+                    "clk_en_rst_s": (
+                        "clk_en_rst_s",
+                        [
+                            "rst_i: ready_received_reg_rst",
+                            "en_i: ready_received_reg_en",
+                        ],
+                    ),
                     "data_i": "ready_received_reg_data_i",
                     "data_o": "ready_received_reg_data_o",
                 },
             },
             {
-                "core_name": "iob_reg_r",
+                "core_name": "iob_reg",
                 "instance_name": "cpu_reset_delayed_reg",
+                "port_params": {
+                    "clk_en_rst_s": "c_a_r",
+                },
                 "parameters": {
                     "DATA_W": 2,
                     "RST_VAL": "2'b11",
                 },
                 "connect": {
-                    "clk_en_rst_s": "clk_en_rst_s",
-                    "rst_i": "cpu_reset_delayed_rst_i",
+                    "clk_en_rst_s": (
+                        "clk_en_rst_s",
+                        [
+                            "rst_i: cpu_reset_delayed_rst_i",
+                        ],
+                    ),
                     "data_i": "cpu_reset_delayed_data_i",
                     "data_o": "cpu_reset_delayed_data_o",
                 },
@@ -444,8 +455,7 @@ assign plic_iob_ready_o = 1'b0;
 
 // Connect AXI-Lite to AXI
 
-assign ibus_axi_araddr_o = ibus_axil_axil_araddr[AXI_ADDR_W-1:2];
-assign ibus_axi_arprot_o = ibus_axil_axil_arprot;
+assign ibus_axi_araddr_o = ibus_axil_axil_araddr;
 assign ibus_axi_arvalid_o = ibus_axil_axil_arvalid;
 assign ibus_axil_axil_arready = ibus_axi_arready_i;
 assign ibus_axil_axil_rdata = ibus_axi_rdata_i;
@@ -461,8 +471,7 @@ assign ibus_axi_arcache_o = 4'b0;
 assign ibus_axi_arqos_o = 4'b0;
 // assign ... = ibus_axi_rid_i,
 // assign ... = ibus_axi_rlast_i,
-assign ibus_axi_awaddr_o = ibus_axil_axil_awaddr[AXI_ADDR_W-1:2];
-assign ibus_axi_awprot_o = ibus_axil_axil_awprot;
+assign ibus_axi_awaddr_o = ibus_axil_axil_awaddr;
 assign ibus_axi_awvalid_o = ibus_axil_axil_awvalid;
 assign ibus_axil_axil_awready = ibus_axi_awready_i;
 assign ibus_axi_wdata_o = ibus_axil_axil_wdata;
@@ -482,8 +491,7 @@ assign ibus_axi_awqos_o = 4'b0;
 assign ibus_axi_wlast_o = 1'b1;
 // assign ... = ibus_axi_bid_i,
 
-assign dbus_axi_araddr_o = dbus_axil_axil_araddr[AXI_ADDR_W-1:2];
-assign dbus_axi_arprot_o = dbus_axil_axil_arprot;
+assign dbus_axi_araddr_o = dbus_axil_axil_araddr;
 assign dbus_axi_arvalid_o = dbus_axil_axil_arvalid;
 assign dbus_axil_axil_arready = dbus_axi_arready_i;
 assign dbus_axil_axil_rdata = dbus_axi_rdata_i;
@@ -499,8 +507,7 @@ assign dbus_axi_arcache_o = 4'b0;
 assign dbus_axi_arqos_o = 4'b0;
 // assign ... = dbus_axi_rid_i,
 // assign ... = dbus_axi_rlast_i,
-assign dbus_axi_awaddr_o = dbus_axil_axil_awaddr[AXI_ADDR_W-1:2];
-assign dbus_axi_awprot_o = dbus_axil_axil_awprot;
+assign dbus_axi_awaddr_o = dbus_axil_axil_awaddr;
 assign dbus_axi_awvalid_o = dbus_axil_axil_awvalid;
 assign dbus_axil_axil_awready = dbus_axi_awready_i;
 assign dbus_axi_wdata_o = dbus_axil_axil_wdata;
