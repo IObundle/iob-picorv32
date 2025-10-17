@@ -222,108 +222,206 @@ def setup(py_params_dict):
                 ],
             },
         ],
-        "subblocks": [
-            # TODO: Add iob_cache and a way to bypass it for uncached memory region
-            # {
-            #     "core_name": "iob_system_cache_system",
-            #     "instance_name": "cache",
-            #     "instance_description": "L1 and L2 caches",
-            #     "parameters": {
-            #         "AXI_ADDR_W": "AXI_ADDR_W",
-            #         "AXI_DATA_W": "AXI_DATA_W",
-            #         "AXI_ID_W": "AXI_ID_W",
-            #         "AXI_LEN_W": "AXI_LEN_W",
-            #         "DDR_ADDR_W": 32, # do we need this?
-            #         "FIRM_ADDR_W": 32, # do we need this?
-            #     },
-            #     "connect": {
-            #         "clk_en_rst_s": "clk_en_rst_s",
-            #         "i_bus_s": "i_bus",
-            #         "d_bus_s": "d_bus",
-            #         "axi_m": "d_bus_m",
-            #     },
-            # },
+    }
+    attributes_dict["subblocks"] = []
+    if params["include_cache"]:
+        #                       +-> iob2axi ---+
+        #                       |              |
+        # CPU ibus -> iob_split +->            |
+        # CPU dbus -> iob_split +-> iob_cache -+-> axi_merge -> memory
+        #                       |              |
+        #                       +-> iob2axi ---+
+        attributes_dict["wires"] += [
             {
-                "core_name": "iob_iob2axi",
-                "instance_name": "ibus_iob2axi",
-                "instance_description": "Convert IOb instruction bus to AXI",
+                "name": "cache_pipeline_signals",
+                "signals": [
+                    {"name": "ibus_araddr_ignore_bits", "width": 2},
+                    {"name": "ibus_awaddr_ignore_bits", "width": 2},
+                    {"name": "inside_io_region_ibus", "width": 1},
+                    {"name": "inside_io_region_dbus", "width": 1},
+                ],
+            },
+        ]
+        attributes_dict["subblocks"] += [
+            {
+                "core_name": "iob_system_cache_system",
+                "instance_name": "cache",
+                "instance_description": "L1 and L2 caches",
                 "parameters": {
-                    "AXI_ID_W": "AXI_ID_W",
                     "AXI_ADDR_W": "AXI_ADDR_W",
                     "AXI_DATA_W": "AXI_DATA_W",
+                    "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
-                    "AXI_LOCK_W": 1,
+                    "DDR_ADDR_W": 32,  # do we need this?
+                    "FIRM_ADDR_W": 32,  # do we need this?
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "iob_s": "i_bus",
-                    "axi_m": "i_bus_m",
+                    "i_bus_s": "split2cache_ibus",
+                    "d_bus_s": "split2cache_dbus",
+                    "axi_m": "cache2merge",
                 },
             },
             {
-                "core_name": "iob_iob2axi",
-                "instance_name": "dbus_iob2axi",
-                "instance_description": "Convert IOb data bus to AXI",
-                "parameters": {
-                    "AXI_ID_W": "AXI_ID_W",
-                    "AXI_ADDR_W": "AXI_ADDR_W",
-                    "AXI_DATA_W": "AXI_DATA_W",
-                    "AXI_LEN_W": "AXI_LEN_W",
-                    "AXI_LOCK_W": 1,
-                },
+                "core_name": "iob_split",
+                "name": "picorv32_ibus_split",
+                "instance_name": "ibus_split",
+                "instance_description": "Split cached/uncached ibus requests",
+                "addr_w": 33,  # Each manager has -1 address bit (32 bits each). Subordinate has 33 bits (32 address + 1 selector)
+                "num_outputs": 2,
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "iob_s": "d_bus",
-                    "axi_m": "d_bus_m",
-                },
-            },
-            {
-                "core_name": "iob_reg",
-                "instance_name": "ready_received_re",
-                "port_params": {
-                    "clk_en_rst_s": "c_a_r_e",
-                },
-                "parameters": {
-                    "DATA_W": 1,
-                    "RST_VAL": "1'b0",
-                },
-                "connect": {
-                    "clk_en_rst_s": (
-                        "clk_en_rst_s",
+                    "reset_i": "split_reset",
+                    "input_s": (
+                        "i_bus",
                         [
-                            "rst_i: ready_received_reg_rst",
-                            "en_i: ready_received_reg_en",
+                            "{inside_io_region_ibus, ibus_iob_addr}",
                         ],
                     ),
-                    "data_i": "ready_received_reg_data_i",
-                    "data_o": "ready_received_reg_data_o",
+                    "output_0_m": "split2cache_ibus",
+                    "output_1_m": "split2axi_ibus",
                 },
             },
             {
-                "core_name": "iob_reg",
-                "instance_name": "cpu_reset_delayed_reg",
-                "port_params": {
-                    "clk_en_rst_s": "c_a_r",
-                },
-                "parameters": {
-                    "DATA_W": 2,
-                    "RST_VAL": "2'b11",
-                },
+                "core_name": "iob_split",
+                "name": "picorv32_dbus_split",
+                "instance_name": "dbus_split",
+                "instance_description": "Split cached/uncached dbus requests",
+                "addr_w": 33,  # Each manager has -1 address bit (32 bits each). Subordinate has 33 bits (32 address + 1 selector)
+                "num_outputs": 2,
                 "connect": {
-                    "clk_en_rst_s": (
-                        "clk_en_rst_s",
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "reset_i": "split_reset",
+                    "input_s": (
+                        "d_bus",
                         [
-                            "rst_i: cpu_reset_delayed_rst_i",
+                            "{inside_io_region_dbus, dbus_iob_addr}",
                         ],
                     ),
-                    "data_i": "cpu_reset_delayed_data_i",
-                    "data_o": "cpu_reset_delayed_data_o",
+                    "output_0_m": "split2cache_dbus",
+                    "output_1_m": "split2axi_dbus",
                 },
             },
-        ],
-        "snippets": [
             {
-                "verilog_code": f"""
+                "core_name": "iob_axi_merge",
+                "name": "iob_picorv32_axi_merge",
+                "instance_name": "axi_merge",
+                "instance_description": "Merge",
+                "addr_w": 34,  # Each subordinate has -1 address bit (32 bits each). Manager has 34 bits (2 ignored).
+                "lock_w": 1,
+                "parameters": {
+                    "ID_W": "AXI_ID_W",
+                    "LEN_W": "AXI_LEN_W",
+                },
+                "num_subordinates": 3,
+                "connect": {
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "reset_i": "rst_i",
+                    "s_0_s": "axi2merge_ibus",
+                    "s_1_s": "axi2merge_dbus",
+                    "s_2_s": "cache2merge",
+                    "m_m": (
+                        "i_bus_m",
+                        [
+                            # Ignore most significant address bits (we only use 32 bits)
+                            "{ibus_araddr_ignore_bits, ibus_axi_araddr_o}",
+                            "{ibus_awaddr_ignore_bits, ibus_axi_awaddr_o}",
+                        ],
+                    ),
+                },
+            },
+        ]
+    # IOb to AXI converters
+    attributes_dict["subblocks"] += [
+        {
+            "core_name": "iob_iob2axi",
+            "instance_name": "ibus_iob2axi",
+            "instance_description": "Convert IOb instruction bus to AXI",
+            "parameters": {
+                "AXI_ID_W": "AXI_ID_W",
+                "AXI_ADDR_W": "AXI_ADDR_W",
+                "AXI_DATA_W": "AXI_DATA_W",
+                "AXI_LEN_W": "AXI_LEN_W",
+                "AXI_LOCK_W": 1,
+            },
+            "connect": {
+                "clk_en_rst_s": "clk_en_rst_s",
+                "iob_s": "i_bus",
+                "axi_m": "i_bus_m",
+            },
+        },
+        {
+            "core_name": "iob_iob2axi",
+            "instance_name": "dbus_iob2axi",
+            "instance_description": "Convert IOb data bus to AXI",
+            "parameters": {
+                "AXI_ID_W": "AXI_ID_W",
+                "AXI_ADDR_W": "AXI_ADDR_W",
+                "AXI_DATA_W": "AXI_DATA_W",
+                "AXI_LEN_W": "AXI_LEN_W",
+                "AXI_LOCK_W": 1,
+            },
+            "connect": {
+                "clk_en_rst_s": "clk_en_rst_s",
+                "iob_s": "d_bus",
+                "axi_m": "d_bus_m",
+            },
+        },
+    ]
+    if params["include_cache"]:
+        # Replace connections of iob2axi converters
+        attributes_dict["subblocks"][-2]["connect"]["iob_s"] = "split2axi_ibus"
+        attributes_dict["subblocks"][-2]["connect"]["axi_m"] = "axi2merge_ibus"
+        attributes_dict["subblocks"][-1]["connect"]["iob_s"] = "split2axi_dbus"
+        attributes_dict["subblocks"][-1]["connect"]["axi_m"] = "axi2merge_dbus"
+    attributes_dict["subblocks"] += [
+        {
+            "core_name": "iob_reg",
+            "instance_name": "ready_received_re",
+            "port_params": {
+                "clk_en_rst_s": "c_a_r_e",
+            },
+            "parameters": {
+                "DATA_W": 1,
+                "RST_VAL": "1'b0",
+            },
+            "connect": {
+                "clk_en_rst_s": (
+                    "clk_en_rst_s",
+                    [
+                        "rst_i: ready_received_reg_rst",
+                        "en_i: ready_received_reg_en",
+                    ],
+                ),
+                "data_i": "ready_received_reg_data_i",
+                "data_o": "ready_received_reg_data_o",
+            },
+        },
+        {
+            "core_name": "iob_reg",
+            "instance_name": "cpu_reset_delayed_reg",
+            "port_params": {
+                "clk_en_rst_s": "c_a_r",
+            },
+            "parameters": {
+                "DATA_W": 2,
+                "RST_VAL": "2'b11",
+            },
+            "connect": {
+                "clk_en_rst_s": (
+                    "clk_en_rst_s",
+                    [
+                        "rst_i: cpu_reset_delayed_rst_i",
+                    ],
+                ),
+                "data_i": "cpu_reset_delayed_data_i",
+                "data_o": "cpu_reset_delayed_data_o",
+            },
+        },
+    ]
+    attributes_dict["snippets"] = [
+        {
+            "verilog_code": f"""
    //picorv32 native interface wires
    wire                cpu_instr;
    wire                cpu_valid;
@@ -434,8 +532,44 @@ assign plic_iob_ready_o = 1'b0;
 //plic_iob_wstrb_i,
 
 """
+        }
+    ]
+    if params["include_cache"]:
+        # Connect unused d_bus_m port to zero
+        attributes_dict["snippets"] += [
+            {
+                "verilog_code": f"""
+   wire inside_io_region_ibus = ibus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && ibus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
+   wire inside_io_region_dbus = dbus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && dbus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
+"""
+                + """
+   // Unused dbus write signals
+   assign dbus_axi_araddr_o = {AXI_ADDR_W{1'b0}};
+   assign dbus_axi_arvalid_o = 1'b0;
+   assign dbus_axi_rready_o = 1'b0;
+   assign dbus_axi_arid_o = {AXI_ID_W{1'b0}};
+   assign dbus_axi_arlen_o = {AXI_LEN_W{1'b0}};
+   assign dbus_axi_arsize_o = 3'b0;
+   assign dbus_axi_arburst_o = 2'b0;
+   assign dbus_axi_arlock_o = 1'b0;
+   assign dbus_axi_arcache_o = 4'b0;
+   assign dbus_axi_arqos_o = 4'b0;
+   assign dbus_axi_awaddr_o = {AXI_ADDR_W{1'b0}},
+   assign dbus_axi_awvalid_o = 1'b0;
+   assign dbus_axi_wdata_o = {AXI_DATA_W{1'b0}};
+   assign dbus_axi_wstrb_o = {AXI_DATA_W / 8{1'b0}};
+   assign dbus_axi_wvalid_o = 1'b0;
+   assign dbus_axi_bready_o = 1'b0;
+   assign dbus_axi_awid_o = {AXI_ID_W{1'b0}};
+   assign dbus_axi_awlen_o = {AXI_LEN_W{1'b0}};
+   assign dbus_axi_awsize_o = 3'b0;
+   assign dbus_axi_awburst_o = 2'b0;
+   assign dbus_axi_awlock_o = 1'b0;
+   assign dbus_axi_awcache_o = 4'b0;
+   assign dbus_axi_awqos_o = 4'b0;
+   assign dbus_axi_wlast_o = 1'b0;
+"""
             }
-        ],
-    }
+        ]
 
     return attributes_dict
