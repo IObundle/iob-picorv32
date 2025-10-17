@@ -225,12 +225,12 @@ def setup(py_params_dict):
     }
     attributes_dict["subblocks"] = []
     if params["include_cache"]:
-        #                       +-> iob2axi ---+
-        #                       |              |
-        # CPU ibus -> iob_split +->            |
-        # CPU dbus -> iob_split +-> iob_cache -+-> axi_merge -> memory
-        #                       |              |
-        #                       +-> iob2axi ---+
+        # CPU ibus -> iob_split ----+-> iob2axi -+
+        #                           |            |
+        #                           v            |
+        # CPU dbus -> iob_split +-> iob_cache ---+-> axi_merge -> memory
+        #                       |                |
+        #                       +-----> iob2axi -+
         attributes_dict["wires"] += [
             {
                 "name": "cache_pipeline_signals",
@@ -240,6 +240,82 @@ def setup(py_params_dict):
                     {"name": "inside_io_region_ibus", "width": 1},
                     {"name": "inside_io_region_dbus", "width": 1},
                 ],
+            },
+            # Split to cache
+            {
+                "name": "split2cache_ibus",
+                "signals": {
+                    "type": "iob",
+                    "prefix": "split2cache_ibus_",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                },
+            },
+            {
+                "name": "split2cache_dbus",
+                "signals": {
+                    "type": "iob",
+                    "prefix": "split2cache_dbus_",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                },
+            },
+            # Split to iob2axi
+            {
+                "name": "split2axi_ibus",
+                "signals": {
+                    "type": "iob",
+                    "prefix": "split2axi_ibus_",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                },
+            },
+            {
+                "name": "split2axi_dbus",
+                "signals": {
+                    "type": "iob",
+                    "prefix": "split2axi_dbus_",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                },
+            },
+            # iob2axi to merge
+            {
+                "name": "axi2merge_ibus",
+                "signals": {
+                    "type": "axi",
+                    "prefix": "axi2merge_ibus_",
+                    "ID_W": "AXI_ID_W",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                    "LEN_W": "AXI_LEN_W",
+                    "LOCK_W": 1,
+                },
+            },
+            {
+                "name": "axi2merge_dbus",
+                "signals": {
+                    "type": "axi",
+                    "prefix": "axi2merge_dbus_",
+                    "ID_W": "AXI_ID_W",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                    "LEN_W": "AXI_LEN_W",
+                    "LOCK_W": 1,
+                },
+            },
+            # cache to merge
+            {
+                "name": "cache2merge",
+                "signals": {
+                    "type": "axi",
+                    "prefix": "cache2merge_",
+                    "ID_W": "AXI_ID_W",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                    "LEN_W": "AXI_LEN_W",
+                    "LOCK_W": 1,
+                },
             },
         ]
         attributes_dict["subblocks"] += [
@@ -252,13 +328,11 @@ def setup(py_params_dict):
                     "AXI_DATA_W": "AXI_DATA_W",
                     "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
-                    "DDR_ADDR_W": 32,  # do we need this?
-                    "FIRM_ADDR_W": 32,  # do we need this?
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "i_bus_s": "split2cache_ibus",
-                    "d_bus_s": "split2cache_dbus",
+                    "i_bus_s": ("split2cache_ibus", ["split2cache_ibus_iob_addr[31:2]"]),
+                    "d_bus_s": ("split2cache_dbus", ["split2cache_dbus_iob_addr[31:2]"]),
                     "axi_m": "cache2merge",
                 },
             },
@@ -539,8 +613,8 @@ assign plic_iob_ready_o = 1'b0;
         attributes_dict["snippets"] += [
             {
                 "verilog_code": f"""
-   wire inside_io_region_ibus = ibus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && ibus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
-   wire inside_io_region_dbus = dbus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && dbus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
+   assign inside_io_region_ibus = ibus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && ibus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
+   assign inside_io_region_dbus = dbus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && dbus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
 """
                 + """
    // Unused dbus write signals
@@ -554,7 +628,7 @@ assign plic_iob_ready_o = 1'b0;
    assign dbus_axi_arlock_o = 1'b0;
    assign dbus_axi_arcache_o = 4'b0;
    assign dbus_axi_arqos_o = 4'b0;
-   assign dbus_axi_awaddr_o = {AXI_ADDR_W{1'b0}},
+   assign dbus_axi_awaddr_o = {AXI_ADDR_W{1'b0}};
    assign dbus_axi_awvalid_o = 1'b0;
    assign dbus_axi_wdata_o = {AXI_DATA_W{1'b0}};
    assign dbus_axi_wstrb_o = {AXI_DATA_W / 8{1'b0}};
