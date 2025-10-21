@@ -342,18 +342,18 @@ def setup(py_params_dict):
                 "instance_name": "ibus_split",
                 "instance_description": "Split cached/uncached ibus requests",
                 "addr_w": 33,  # Each manager has -1 address bit (32 bits each). Subordinate has 33 bits (32 address + 1 selector)
-                "num_outputs": 2,
+                "num_managers": 2,
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "reset_i": "split_reset",
-                    "input_s": (
+                    "s_s": (
                         "i_bus",
                         [
                             "{inside_io_region_ibus, ibus_iob_addr}",
                         ],
                     ),
-                    "output_0_m": "split2cache_ibus",
-                    "output_1_m": "split2axi_ibus",
+                    "m_0_m": "split2cache_ibus",
+                    "m_1_m": "split2axi_ibus",
                 },
             },
             {
@@ -362,18 +362,18 @@ def setup(py_params_dict):
                 "instance_name": "dbus_split",
                 "instance_description": "Split cached/uncached dbus requests",
                 "addr_w": 33,  # Each manager has -1 address bit (32 bits each). Subordinate has 33 bits (32 address + 1 selector)
-                "num_outputs": 2,
+                "num_managers": 2,
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "reset_i": "split_reset",
-                    "input_s": (
+                    "s_s": (
                         "d_bus",
                         [
                             "{inside_io_region_dbus, dbus_iob_addr}",
                         ],
                     ),
-                    "output_0_m": "split2cache_dbus",
-                    "output_1_m": "split2axi_dbus",
+                    "m_0_m": "split2cache_dbus",
+                    "m_1_m": "split2axi_dbus",
                 },
             },
             {

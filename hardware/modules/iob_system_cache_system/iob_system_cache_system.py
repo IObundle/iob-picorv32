@@ -278,13 +278,13 @@ def setup(py_params_dict):
             "name": "system_cache_merge",
             "instance_name": "ibus_dbus_merge",
             "addr_w": 33,  # Each subordinate has -1 address bit (32 bits each). Manager has 33 bits (1 ignored).
-            "num_inputs": 2,
+            "num_subordinates": 2,
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
                 "reset_i": "always_low",
-                "input_0_s": "ibus2merge",
-                "input_1_s": "dbus2merge",
-                "output_m": (
+                "s_0_s": "ibus2merge",
+                "s_1_s": "dbus2merge",
+                "m_m": (
                     "merge2l2",
                     [
                         # Ignore most significant address bit (we only use 32 bits)
