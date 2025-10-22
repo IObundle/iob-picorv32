@@ -499,8 +499,10 @@ def setup(py_params_dict):
    //picorv32 native interface wires
    wire                cpu_instr;
    wire                cpu_valid;
-   wire [  AXI_ADDR_W-1:0] cpu_addr;
+   wire [  AXI_ADDR_W-1:0] cpu_word_addr;
+   reg  [  AXI_ADDR_W-1:0] cpu_byte_addr;
    wire [AXI_DATA_W/8-1:0] cpu_wstrb;
+   wire [AXI_DATA_W/8-1:0] cpu_rstrb;
    wire [  AXI_DATA_W-1:0] cpu_wdata;
    wire [  AXI_DATA_W-1:0] cpu_rdata;
    wire                cpu_ready;
@@ -511,13 +513,13 @@ def setup(py_params_dict):
 
    //compute the instruction bus request
    assign ibus_iob_valid = iob_i_valid;
-   assign ibus_iob_addr  = cpu_addr;
+   assign ibus_iob_addr  = cpu_byte_addr;
    assign ibus_iob_wdata = {{AXI_DATA_W{{1'b0}}}};
    assign ibus_iob_wstrb = {{(AXI_DATA_W / 8) {{1'b0}}}};
 
    //compute the data bus request
    assign dbus_iob_valid = iob_d_valid;
-   assign dbus_iob_addr  = cpu_addr;
+   assign dbus_iob_addr  = cpu_byte_addr;
    assign dbus_iob_wdata = cpu_wdata;
    assign dbus_iob_wstrb = cpu_wstrb;
 
@@ -559,9 +561,10 @@ def setup(py_params_dict):
       .mem_instr   (cpu_instr),
       //memory interface
       .mem_valid   (cpu_valid),
-      .mem_addr    (cpu_addr),
+      .mem_addr    (cpu_word_addr),
       .mem_wdata   (cpu_wdata),
       .mem_wstrb   (cpu_wstrb),
+      .mem_rstrb   (cpu_rstrb),
       .mem_rdata   (cpu_rdata),
       .mem_ready   (cpu_ready),
       //lookahead interface
@@ -570,6 +573,7 @@ def setup(py_params_dict):
       .mem_la_addr (),
       .mem_la_wdata(),
       .mem_la_wstrb(),
+      .mem_la_rstrb(),
       //co-processor interface (PCPI)
       .pcpi_valid  (),
       .pcpi_insn   (),
@@ -605,7 +609,26 @@ assign plic_iob_ready_o = 1'b0;
 //plic_iob_wdata_i,
 //plic_iob_wstrb_i,
 
+""" + """
+// Convert word aligned address to byte aligned address
+always @* begin
+   // Higher bits of byte address are the same
+   cpu_byte_addr = cpu_word_addr;
+
+   if (|cpu_wstrb) begin
+      if (cpu_wstrb[0]) cpu_byte_addr[1:0] = 2'b00; // Byte 0
+      else if (cpu_wstrb[1]) cpu_byte_addr[1:0] = 2'b01; // Byte 1
+      else if (cpu_wstrb[2]) cpu_byte_addr[1:0] = 2'b10; // Byte 2
+      else if (cpu_wstrb[3]) cpu_byte_addr[1:0] = 2'b11; // Byte 3
+   end else begin
+      if (cpu_rstrb[0]) cpu_byte_addr[1:0] = 2'b00; // Byte 0
+      else if (cpu_rstrb[1]) cpu_byte_addr[1:0] = 2'b01; // Byte 1
+      else if (cpu_rstrb[2]) cpu_byte_addr[1:0] = 2'b10; // Byte 2
+      else if (cpu_rstrb[3]) cpu_byte_addr[1:0] = 2'b11; // Byte 3
+   end
+end
 """
+
         }
     ]
     if params["include_cache"]:
