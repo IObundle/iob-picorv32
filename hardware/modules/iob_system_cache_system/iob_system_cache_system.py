@@ -93,7 +93,7 @@ def setup(py_params_dict):
                 "signals": {
                     "type": "iob",
                     "prefix": "i_",
-                    "ADDR_W": "FE_ADDR_W - 2",
+                    "ADDR_W": "FE_ADDR_W",
                     "DATA_W": "FE_DATA_W",
                 },
             },
@@ -103,7 +103,7 @@ def setup(py_params_dict):
                 "signals": {
                     "type": "iob",
                     "prefix": "d_",
-                    "ADDR_W": "FE_ADDR_W - 2",
+                    "ADDR_W": "FE_ADDR_W",
                     "DATA_W": "FE_DATA_W",
                 },
             },
@@ -263,12 +263,7 @@ def setup(py_params_dict):
             },
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
-                "iob_s": (
-                    "merge2l2",
-                    [
-                        "merge2l2_iob_addr[31:2]",
-                    ],
-                ),
+                "iob_s": "merge2l2",
                 "axi_m": "axi_m",
                 "ie_io": "l2_cache_ie",
             },

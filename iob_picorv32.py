@@ -331,8 +331,8 @@ def setup(py_params_dict):
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "i_bus_s": ("split2cache_ibus", ["split2cache_ibus_iob_addr[31:2]"]),
-                    "d_bus_s": ("split2cache_dbus", ["split2cache_dbus_iob_addr[31:2]"]),
+                    "i_bus_s": "split2cache_ibus",
+                    "d_bus_s": "split2cache_dbus",
                     "axi_m": "cache2merge",
                 },
             },
