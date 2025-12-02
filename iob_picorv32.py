@@ -345,7 +345,7 @@ def setup(py_params_dict):
                 "num_managers": 2,
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "reset_i": "split_reset",
+                    "reset_i": "rst_i",
                     "s_s": (
                         "i_bus",
                         [
@@ -365,7 +365,7 @@ def setup(py_params_dict):
                 "num_managers": 2,
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "reset_i": "split_reset",
+                    "reset_i": "rst_i",
                     "s_s": (
                         "d_bus",
                         [
@@ -640,7 +640,7 @@ end
    assign inside_io_region_dbus = dbus_iob_addr >= 32'h{params["uncached_start_addr"]:x} && dbus_iob_addr <= 32'h{(params["uncached_start_addr"]+params["uncached_size"]-1):x};
 """
                 + """
-   // Unused dbus write signals
+   // Unused dbus output signals
    assign dbus_axi_araddr_o = {AXI_ADDR_W{1'b0}};
    assign dbus_axi_arvalid_o = 1'b0;
    assign dbus_axi_rready_o = 1'b0;
