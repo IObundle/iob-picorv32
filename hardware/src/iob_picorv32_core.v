@@ -80,6 +80,7 @@ module picorv32 #(
    output reg [31:0] mem_addr,
    output reg [31:0] mem_wdata,
    output reg [ 3:0] mem_wstrb,
+   output reg [ 3:0] mem_rstrb,
    input      [31:0] mem_rdata,
 
    // Look-Ahead Interface
@@ -88,6 +89,7 @@ module picorv32 #(
    output     [31:0] mem_la_addr,
    output reg [31:0] mem_la_wdata,
    output reg [ 3:0] mem_la_wstrb,
+   output reg [ 3:0] mem_la_rstrb,
 
    // Pico Co-Processor Interface (PCPI)
    output reg        pcpi_valid,
@@ -421,11 +423,13 @@ module picorv32 #(
          0: begin
             mem_la_wdata   = reg_op2;
             mem_la_wstrb   = 4'b1111;
+            mem_la_rstrb = 4'b1111;
             mem_rdata_word = mem_rdata;
          end
          1: begin
             mem_la_wdata = {2{reg_op2[15:0]}};
             mem_la_wstrb = reg_op1[1] ? 4'b1100 : 4'b0011;
+            mem_la_rstrb = reg_op1[1] ? 4'b1100 : 4'b0011;
             case (reg_op1[1])
                1'b0:    mem_rdata_word = {16'b0, mem_rdata[15:0]};
                default: mem_rdata_word = {16'b0, mem_rdata[31:16]};
@@ -434,6 +438,7 @@ module picorv32 #(
          2: begin
             mem_la_wdata = {4{reg_op2[7:0]}};
             mem_la_wstrb = 4'b0001 << reg_op1[1:0];
+            mem_la_rstrb = 4'b0001 << reg_op1[1:0];
             case (reg_op1[1:0])
                2'b00:   mem_rdata_word = {24'b0, mem_rdata[7:0]};
                2'b01:   mem_rdata_word = {24'b0, mem_rdata[15:8]};
@@ -641,6 +646,8 @@ module picorv32 #(
          if (mem_la_read || mem_la_write) begin
             mem_addr  <= mem_la_addr;
             mem_wstrb <= mem_la_wstrb & {4{mem_la_write}};
+            mem_rstrb <= mem_la_rstrb & {4{mem_la_read}};
+            //$display("At time:%t, mem_addr:%x, mem_la_read:%x, mem_la_write:%x, mem_la_rstrb:%x, mem_la_wstrb:%x, mem_rstrb:%x, mem_wstrb:%x", $time, mem_addr, mem_la_read, mem_la_write, mem_la_rstrb, mem_la_wstrb, mem_rstrb, mem_wstrb);
          end
          if (mem_la_write) begin
             mem_wdata <= mem_la_wdata;
@@ -732,7 +739,7 @@ module picorv32 #(
        instr_sra,
        instr_or,
        instr_and;
-   reg instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh, instr_ecall_ebreak;
+   reg instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh, instr_ecall_ebreak, instr_fence;
    reg instr_getq, instr_setq, instr_retirq, instr_maskirq, instr_waitirq, instr_timer;
    wire instr_trap;
 
@@ -764,7 +771,7 @@ module picorv32 #(
                                              instr_lb, instr_lh, instr_lw, instr_lbu, instr_lhu, instr_sb, instr_sh, instr_sw,
                                              instr_addi, instr_slti, instr_sltiu, instr_xori, instr_ori, instr_andi, instr_slli, instr_srli, instr_srai,
                                              instr_add, instr_sub, instr_sll, instr_slt, instr_sltu, instr_xor, instr_srl, instr_sra, instr_or, instr_and,
-                                             instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh,
+                                             instr_rdcycle, instr_rdcycleh, instr_rdinstr, instr_rdinstrh, instr_fence,
                                              instr_getq, instr_setq, instr_retirq, instr_maskirq, instr_waitirq, instr_timer};
 
    wire is_rdcycle_rdcycleh_rdinstr_rdinstrh;
@@ -830,6 +837,7 @@ module picorv32 #(
       if (instr_rdcycleh) new_ascii_instr = "rdcycleh";
       if (instr_rdinstr) new_ascii_instr = "rdinstr";
       if (instr_rdinstrh) new_ascii_instr = "rdinstrh";
+      if (instr_fence) new_ascii_instr = "fence";
 
       if (instr_getq) new_ascii_instr = "getq";
       if (instr_setq) new_ascii_instr = "setq";
@@ -1180,6 +1188,8 @@ module picorv32 #(
          instr_ecall_ebreak <= ((mem_rdata_q[6:0] == 7'b1110011 && !mem_rdata_q[31:21] && !mem_rdata_q[19:7]) ||
                 (COMPRESSED_ISA && mem_rdata_q[15:0] == 16'h9002));
 
+         instr_fence   <= (mem_rdata_q[6:0] == 7'b0001111 && !mem_rdata_q[14:12]);
+
          instr_getq    <= mem_rdata_q[6:0] == 7'b0001011 && mem_rdata_q[31:25] == 7'b0000000 && ENABLE_IRQ && ENABLE_IRQ_QREGS;
          instr_setq    <= mem_rdata_q[6:0] == 7'b0001011 && mem_rdata_q[31:25] == 7'b0000001 && ENABLE_IRQ && ENABLE_IRQ_QREGS;
          instr_maskirq <= mem_rdata_q[6:0] == 7'b0001011 && mem_rdata_q[31:25] == 7'b0000011 && ENABLE_IRQ;
@@ -1251,6 +1261,7 @@ module picorv32 #(
          instr_sra                    <= 0;
          instr_or                     <= 0;
          instr_and                    <= 0;
+         instr_fence                  <= 0;
       end
    end
 
@@ -2485,7 +2496,7 @@ module picorv32_axi #(
    resetn,
    output trap,
 
-   // AXI4-lite master memory interface
+   // AXI4-lite manager memory interface
 
    output        mem_axi_awvalid,
    input         mem_axi_awready,
@@ -2673,7 +2684,7 @@ module picorv32_axi_adapter (
    input clk,
    resetn,
 
-   // AXI4-lite master memory interface
+   // AXI4-lite manager memory interface
 
    output        mem_axi_awvalid,
    input         mem_axi_awready,
@@ -2839,6 +2850,7 @@ module picorv32_wb #(
    wire [31:0] mem_addr;
    wire [31:0] mem_wdata;
    wire [ 3:0] mem_wstrb;
+   wire [ 3:0] mem_rstrb;
    reg         mem_ready;
    reg  [31:0] mem_rdata;
 
@@ -2883,6 +2895,7 @@ module picorv32_wb #(
       .mem_addr (mem_addr),
       .mem_wdata(mem_wdata),
       .mem_wstrb(mem_wstrb),
+      .mem_rstrb(mem_rstrb),
       .mem_instr(mem_instr),
       .mem_ready(mem_ready),
       .mem_rdata(mem_rdata),
@@ -2950,8 +2963,10 @@ module picorv32_wb #(
                   wbm_adr_o <= mem_addr;
                   wbm_dat_o <= mem_wdata;
                   wbm_we_o  <= we;
-                  wbm_sel_o <= mem_wstrb;
-
+                  if (we)
+                     wbm_sel_o <= mem_wstrb;
+                  else
+                     wbm_sel_o <= mem_rstrb;
                   wbm_stb_o <= 1'b1;
                   wbm_cyc_o <= 1'b1;
                   state     <= WBSTART;
