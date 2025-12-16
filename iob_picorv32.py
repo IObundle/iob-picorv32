@@ -328,6 +328,10 @@ def setup(py_params_dict):
                     "AXI_DATA_W": "AXI_DATA_W",
                     "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
+                    "FE_ADDR_W": "AXI_ADDR_W",
+                    "FE_DATA_W": "AXI_DATA_W",
+                    "BE_ADDR_W": "AXI_ADDR_W",
+                    "BE_DATA_W": "AXI_DATA_W",
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
@@ -417,6 +421,8 @@ def setup(py_params_dict):
                 "AXI_DATA_W": "AXI_DATA_W",
                 "AXI_LEN_W": "AXI_LEN_W",
                 "AXI_LOCK_W": 1,
+                "ADDR_W": "AXI_ADDR_W",
+                "DATA_W": "AXI_DATA_W",
             },
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
@@ -434,6 +440,8 @@ def setup(py_params_dict):
                 "AXI_DATA_W": "AXI_DATA_W",
                 "AXI_LEN_W": "AXI_LEN_W",
                 "AXI_LOCK_W": 1,
+                "ADDR_W": "AXI_ADDR_W",
+                "DATA_W": "AXI_DATA_W",
             },
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
