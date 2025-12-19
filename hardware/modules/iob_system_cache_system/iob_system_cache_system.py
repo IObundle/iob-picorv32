@@ -48,7 +48,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "FE_ADDR_W",
-                "descr": "Front-end address width (log2): defines the total memory space accessible via the cache, which must be a power of two.",
+                "descr": "Front-end address width: defines the total memory space accessible via the cache, which must be a power of two.",
                 "type": "P",
                 "val": "1",
                 "min": "1",
@@ -56,7 +56,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "FE_DATA_W",
-                "descr": "Front-end data width (log2): this parameter allows supporting processing elements with various data widths.",
+                "descr": "Front-end data width: this parameter allows supporting processing elements with various data widths.",
                 "type": "P",
                 "val": "32",
                 "min": "32",
@@ -64,7 +64,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "BE_ADDR_W",
-                "descr": "Back-end address width (log2): the value of this parameter must be equal or greater than FE_ADDR_W to match the width of the back-end interface, but the address space is still dictated by ADDR_W.",
+                "descr": "Back-end address width: the value of this parameter must be equal or greater than FE_ADDR_W to match the width of the back-end interface, but the address space is still dictated by ADDR_W.",
                 "type": "P",
                 "val": "1",
                 "min": "1",
@@ -72,7 +72,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "BE_DATA_W",
-                "descr": "Back-end data width (log2): the value of this parameter must be an integer  multiple $k \\geq 1$ of DATA_W. If $k>1$, the memory controller can operate at a frequency higher than the cache's frequency. Typically, the memory controller has an asynchronous FIFO interface, so that it can sequentially process multiple commands received in paralell from the cache's back-end interface. ",
+                "descr": "Back-end data width: the value of this parameter must be an integer  multiple $k \\geq 1$ of DATA_W. If $k>1$, the memory controller can operate at a frequency higher than the cache's frequency. Typically, the memory controller has an asynchronous FIFO interface, so that it can sequentially process multiple commands received in parallel from the cache's back-end interface. ",
                 "type": "P",
                 "val": "32",
                 "min": "32",
