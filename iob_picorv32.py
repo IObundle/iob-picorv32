@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import os
+
 
 def setup(py_params_dict):
     # Each generated cpu verilog module must have a unique name due to different python parameters (can't have two differnet verilog modules with same name).
@@ -23,6 +25,7 @@ def setup(py_params_dict):
 
     attributes_dict = {
         "name": py_params_dict["name"],
+        "version": "0.2.0",
         "generate_hw": True,
         "confs": [
             {
@@ -74,6 +77,18 @@ def setup(py_params_dict):
                 "descr": "Use multiplication and division instructions",
             },
         ],
+        # ------------------------------------------------------------------
+        # Ports exposed to the IOb-SoC
+        # ------------------------------------------------------------------
+        # PicoRV32 has no on-die CLINT/PLIC. The legacy wrapper exposed
+        # `clint_cbus_s`, `plic_cbus_s` and `plic_interrupts_i[31:0]` to
+        # the SoC; the new iob_system provides those peripherals
+        # externally, so the CPU wrapper only takes the already-aggregated
+        # RISC-V pending bits (machine software / timer / external and
+        # supervisor external) on the standard `interrupt_i` port, plus
+        # the 64-bit `mtime` counter on `timebase_i` (PicoRV32 has no
+        # dedicated `mtime` port - it reads the counter via the
+        # memory-mapped CLINT).
         "ports": [
             {
                 "name": "clk_en_rst_s",
@@ -89,7 +104,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "i_bus_m",
-                "descr": "iob-picorv32 instruction bus",
+                "descr": "CPU instruction bus",
                 "signals": {
                     "type": "axi",
                     "prefix": "ibus_",
@@ -102,7 +117,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "d_bus_m",
-                "descr": "iob-picorv32 data bus",
+                "descr": "CPU data bus",
                 "signals": {
                     "type": "axi",
                     "prefix": "dbus_",
@@ -114,31 +129,44 @@ def setup(py_params_dict):
                 },
             },
             {
-                "name": "clint_cbus_s",
-                "descr": "CLINT CSRs bus",
-                "signals": {
-                    "type": "iob",
-                    "prefix": "clint_",
-                    "ADDR_W": 16,
-                },
-            },
-            {
-                "name": "plic_cbus_s",
-                "descr": "PLIC CSRs bus",
-                "signals": {
-                    "type": "iob",
-                    "prefix": "plic_",
-                    "ADDR_W": 22,
-                },
-            },
-            {
-                "name": "plic_interrupts_i",
-                "descr": "PLIC interrupts",
+                "name": "interrupt_i",
+                "descr": "Standard RISC-V interrupt pending bits (driven by "
+                "external iob_clint and iob_plic)",
                 "signals": [
                     {
-                        "name": "plic_interrupts_i",
-                        "descr": "PLIC interrupts",
-                        "width": 32,
+                        "name": "msip_i",
+                        "descr": "Machine software interrupt.",
+                        "width": "1",
+                    },
+                    {
+                        "name": "mtip_i",
+                        "descr": "Machine timer interrupt.",
+                        "width": "1",
+                    },
+                    {
+                        "name": "meip_i",
+                        "descr": "Machine external interrupt.",
+                        "width": "1",
+                    },
+                    {
+                        "name": "seip_i",
+                        "descr": "Supervisor external interrupt.",
+                        "width": "1",
+                    },
+                ],
+            },
+            {
+                "name": "timebase_i",
+                "descr": "Timebase interface. PicoRV32 has no dedicated "
+                "`mtime` port - the 64-bit counter is read by software "
+                "via the memory-mapped CLINT on the data bus. The port "
+                "is declared here for SoC-level consistency with the "
+                "other CPU wrappers but is unused inside the wrapper.",
+                "signals": [
+                    {
+                        "name": "mtime_i",
+                        "descr": "Input from external 64-bit counter for time CSRs",
+                        "width": "64",
                     },
                 ],
             },
@@ -320,7 +348,7 @@ def setup(py_params_dict):
         ]
         attributes_dict["subblocks"] += [
             {
-                "core_name": "iob_system_cache_system",
+                "core": "iob_system_cache_system",
                 "instance_name": "cache",
                 "instance_description": "L1 and L2 caches",
                 "parameters": {
@@ -341,7 +369,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_split",
+                "core": "iob_split",
                 "name": "picorv32_ibus_split",
                 "instance_name": "ibus_split",
                 "instance_description": "Split cached/uncached ibus requests",
@@ -361,7 +389,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_split",
+                "core": "iob_split",
                 "name": "picorv32_dbus_split",
                 "instance_name": "dbus_split",
                 "instance_description": "Split cached/uncached dbus requests",
@@ -381,7 +409,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_axi_merge",
+                "core": "iob_axi_merge",
                 "name": "iob_picorv32_axi_merge",
                 "instance_name": "axi_merge",
                 "instance_description": "Merge",
@@ -412,7 +440,7 @@ def setup(py_params_dict):
     # IOb to AXI converters
     attributes_dict["subblocks"] += [
         {
-            "core_name": "iob_iob2axi",
+            "core": "iob_iob2axi",
             "instance_name": "ibus_iob2axi",
             "instance_description": "Convert IOb instruction bus to AXI",
             "parameters": {
@@ -431,7 +459,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_iob2axi",
+            "core": "iob_iob2axi",
             "instance_name": "dbus_iob2axi",
             "instance_description": "Convert IOb data bus to AXI",
             "parameters": {
@@ -458,7 +486,7 @@ def setup(py_params_dict):
         attributes_dict["subblocks"][-1]["connect"]["axi_m"] = "axi2merge_dbus"
     attributes_dict["subblocks"] += [
         {
-            "core_name": "iob_reg",
+            "core": "iob_reg",
             "instance_name": "ready_received_re",
             "port_params": {
                 "clk_en_rst_s": "c_a_r_e",
@@ -480,7 +508,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_reg",
+            "core": "iob_reg",
             "instance_name": "cpu_reset_delayed_reg",
             "port_params": {
                 "clk_en_rst_s": "c_a_r",
@@ -501,6 +529,21 @@ def setup(py_params_dict):
             },
         },
     ]
+    # ------------------------------------------------------------------
+    # Verilog snippet
+    # ------------------------------------------------------------------
+    # Aggregated RISC-V pending bits -> PicoRV32 IRQ vector.
+    # PicoRV32 takes a flat 32-bit `irq` input where each bit is a
+    # separate source. The iob_system now feeds the wrapper single-bit
+    # pending signals (`msip_i` / `mtip_i` / `meip_i` / `seip_i`),
+    # which we map onto the SiFive convention:
+    #   irq[3]  = MSI  (machine software)
+    #   irq[7]  = MTI  (machine timer)
+    #   irq[11] = MEI  (machine external)
+    #   irq[9]  = SEI  (supervisor external)
+    # The `eoi[31:0]` output of PicoRV32 is left disconnected: the
+    # iob_plic in the new design acks interrupts via a memory-mapped
+    # write to its claim/complete register, not a wire back.
     attributes_dict["snippets"] = [
         {
             "verilog_code": f"""
@@ -555,6 +598,12 @@ def setup(py_params_dict):
    assign cpu_reset_delayed_rst_i = cpu_reset;
    assign cpu_reset_delayed_data_i = cpu_reset_delayed_data_o<<1;
 
+   // Aggregate the RISC-V pending bits (driven by external iob_clint
+   // and iob_plic) onto the picorv32 IRQ vector using the SiFive bit
+   // numbering (irq[3]=MSI, irq[7]=MTI, irq[9]=SEI, irq[11]=MEI).
+   wire [31:0] picorv32_irq;
+   assign picorv32_irq = {{20'b0, meip_i, 1'b0, seip_i, 1'b0, mtip_i, 3'b0, msip_i, 3'b0}};
+
    //intantiate the PicoRV32 CPU
    picorv32 #(
       .COMPRESSED_ISA (USE_COMPRESSED),
@@ -591,31 +640,12 @@ def setup(py_params_dict):
       .pcpi_rd     (32'd0),
       .pcpi_wait   (1'b0),
       .pcpi_ready  (1'b0),
-      // IRQ
-      .irq         (plic_interrupts_i),
+      // IRQ (aggregated by external iob_clint / iob_plic; eoi tied off)
+      .irq         (picorv32_irq),
       .eoi         (),
       .trace_valid (),
       .trace_data  ()
    );
-
-
-// Connect unused CLINT interface to zero
-assign clint_iob_rvalid_o = 1'b0;
-assign clint_iob_rdata_o = 20'b0;
-assign clint_iob_ready_o = 1'b0;
-//clint_iob_valid_i,
-//clint_iob_addr_i,
-//clint_iob_wdata_i,
-//clint_iob_wstrb_i
-
-// Connect unused PLIC interface to zero
-assign plic_iob_rvalid_o = 1'b0;
-assign plic_iob_rdata_o = 14'b0;
-assign plic_iob_ready_o = 1'b0;
-//plic_iob_valid_i,
-//plic_iob_addr_i,
-//plic_iob_wdata_i,
-//plic_iob_wstrb_i,
 
 """ + """
 // Convert word aligned address to byte aligned address
@@ -676,5 +706,23 @@ end
 """
             }
         ]
+
+    # ------------------------------------------------------------------
+    # Linter pragma
+    # ------------------------------------------------------------------
+    # The picorv32 core trips Verilator's UNUSEDSIGNAL / UNUSEDPARAM
+    # lints for many of its outputs (lookahead interface, PCPI
+    # interface, EOI). Silence the noise in the iob-picorv32 build, the
+    # same way the other CPU wrappers do.
+    if py_params_dict.get("py2hwsw_target", "") == "setup":
+        build_dir = py_params_dict.get("build_dir")
+        os.makedirs(f"{build_dir}/hardware/lint/verilator", exist_ok=True)
+        with open(f"{build_dir}/hardware/lint/verilator_config.vlt", "a") as file:
+            file.write(
+                f"""
+// Lines generated by {os.path.basename(__file__)}
+lint_off -file "*/iob_picorv32_core.v"
+"""
+            )
 
     return attributes_dict

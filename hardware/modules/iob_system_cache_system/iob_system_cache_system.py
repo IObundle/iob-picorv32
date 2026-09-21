@@ -200,7 +200,7 @@ def setup(py_params_dict):
     ]
     attributes_dict["subblocks"] = [
         {
-            "core_name": "iob_cache",
+            "core": "iob_cache",
             "instance_name": "ibus_iob_cache",
             "instance_description": "Instruction cache",
             "be_if": "IOb",
@@ -208,7 +208,7 @@ def setup(py_params_dict):
                 "FE_ADDR_W": "AXI_ADDR_W",
                 "BE_ADDR_W": "AXI_ADDR_W",
                 "NWAYS_W": "1",  # Number of ways
-                "NLINES_W": "7",  # Cache Line Offset (number of lines)
+                "SET_INDEX_W": "7",  # Cache Line Offset (number of lines)
                 "WORD_OFFSET_W": "3",  # Word Offset (number of words per line)
                 "WTBUF_DEPTH_W": "5",  # FIFO's depth -- 5 minimum for BRAM implementation
                 "USE_CTRL": "0",  # Cache-Control can't be accessed
@@ -222,7 +222,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_cache",
+            "core": "iob_cache",
             "instance_name": "dbus_iob_cache",
             "instance_description": "Data cache",
             "be_if": "IOb",
@@ -230,7 +230,7 @@ def setup(py_params_dict):
                 "FE_ADDR_W": "AXI_ADDR_W",
                 "BE_ADDR_W": "AXI_ADDR_W",
                 "NWAYS_W": "1",  # Number of ways
-                "NLINES_W": "7",  # Cache Line Offset (number of lines)
+                "SET_INDEX_W": "7",  # Cache Line Offset (number of lines)
                 "WORD_OFFSET_W": "3",  # Word Offset (number of words per line)
                 "WTBUF_DEPTH_W": "5",  # FIFO's depth -- 5 minimum for BRAM implementation
                 "USE_CTRL": "0",  # Cache-Control can't be accessed
@@ -244,7 +244,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_cache",
+            "core": "iob_cache",
             "instance_name": "l2_iob_cache",
             "instance_description": "L2 cache",
             "be_if": "AXI4",
@@ -255,7 +255,7 @@ def setup(py_params_dict):
                 "AXI_ID_W": "AXI_ID_W",
                 "AXI_LEN_W": "AXI_LEN_W",
                 "NWAYS_W": "2",  # Number of ways
-                "NLINES_W": "7",  # Cache Line Offset (number of lines)
+                "SET_INDEX_W": "7",  # Cache Line Offset (number of lines)
                 "WORD_OFFSET_W": "3",  # Word Offset (number of words per line)
                 "WTBUF_DEPTH_W": "5",  # FIFO's depth -- 5 minimum for BRAM implementation
                 "USE_CTRL": "0",  # Cache-Control can't be accessed
@@ -269,7 +269,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_merge",
+            "core": "iob_merge",
             "name": "system_cache_merge",
             "instance_name": "ibus_dbus_merge",
             "addr_w": 33,  # Each subordinate has -1 address bit (32 bits each). Manager has 33 bits (1 ignored).
