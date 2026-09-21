@@ -200,7 +200,7 @@ def setup(py_params_dict):
     ]
     attributes_dict["subblocks"] = [
         {
-            "core_name": "iob_cache",
+            "core": "iob_cache",
             "instance_name": "ibus_iob_cache",
             "instance_description": "Instruction cache",
             "be_if": "IOb",
@@ -222,7 +222,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_cache",
+            "core": "iob_cache",
             "instance_name": "dbus_iob_cache",
             "instance_description": "Data cache",
             "be_if": "IOb",
@@ -244,7 +244,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_cache",
+            "core": "iob_cache",
             "instance_name": "l2_iob_cache",
             "instance_description": "L2 cache",
             "be_if": "AXI4",
@@ -269,7 +269,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_merge",
+            "core": "iob_merge",
             "name": "system_cache_merge",
             "instance_name": "ibus_dbus_merge",
             "addr_w": 33,  # Each subordinate has -1 address bit (32 bits each). Manager has 33 bits (1 ignored).

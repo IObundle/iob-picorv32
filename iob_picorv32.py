@@ -348,7 +348,7 @@ def setup(py_params_dict):
         ]
         attributes_dict["subblocks"] += [
             {
-                "core_name": "iob_system_cache_system",
+                "core": "iob_system_cache_system",
                 "instance_name": "cache",
                 "instance_description": "L1 and L2 caches",
                 "parameters": {
@@ -369,7 +369,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_split",
+                "core": "iob_split",
                 "name": "picorv32_ibus_split",
                 "instance_name": "ibus_split",
                 "instance_description": "Split cached/uncached ibus requests",
@@ -389,7 +389,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_split",
+                "core": "iob_split",
                 "name": "picorv32_dbus_split",
                 "instance_name": "dbus_split",
                 "instance_description": "Split cached/uncached dbus requests",
@@ -409,7 +409,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_axi_merge",
+                "core": "iob_axi_merge",
                 "name": "iob_picorv32_axi_merge",
                 "instance_name": "axi_merge",
                 "instance_description": "Merge",
@@ -440,7 +440,7 @@ def setup(py_params_dict):
     # IOb to AXI converters
     attributes_dict["subblocks"] += [
         {
-            "core_name": "iob_iob2axi",
+            "core": "iob_iob2axi",
             "instance_name": "ibus_iob2axi",
             "instance_description": "Convert IOb instruction bus to AXI",
             "parameters": {
@@ -459,7 +459,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_iob2axi",
+            "core": "iob_iob2axi",
             "instance_name": "dbus_iob2axi",
             "instance_description": "Convert IOb data bus to AXI",
             "parameters": {
@@ -486,7 +486,7 @@ def setup(py_params_dict):
         attributes_dict["subblocks"][-1]["connect"]["axi_m"] = "axi2merge_dbus"
     attributes_dict["subblocks"] += [
         {
-            "core_name": "iob_reg",
+            "core": "iob_reg",
             "instance_name": "ready_received_re",
             "port_params": {
                 "clk_en_rst_s": "c_a_r_e",
@@ -508,7 +508,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_reg",
+            "core": "iob_reg",
             "instance_name": "cpu_reset_delayed_reg",
             "port_params": {
                 "clk_en_rst_s": "c_a_r",

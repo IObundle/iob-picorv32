@@ -101,11 +101,11 @@ def setup(py_params_dict):
         ],
         "subblocks": [
             {
-                "core_name": "iob_reg",
+                "core": "iob_reg",
                 "instance_name": "iob_reg_inst",
             },
             {
-                "core_name": "iob_edge_detect",
+                "core": "iob_edge_detect",
                 "instance_name": "iob_edge_detect_inst",
             },
         ],
